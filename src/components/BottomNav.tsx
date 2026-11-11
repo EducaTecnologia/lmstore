@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Compass, ShoppingBag, Clock, User } from 'lucide-react';
+import { Home, Compass, ShoppingCart, Clock, User } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 export const BottomNav: React.FC = () => {
@@ -49,7 +49,7 @@ export const BottomNav: React.FC = () => {
     {
       id: 'cart',
       label: 'Carrinho',
-      icon: ShoppingBag,
+      icon: ShoppingCart,
       badge: cartCount > 0 ? cartCount : undefined,
       action: () => {
         setActiveView('cart');

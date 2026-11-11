@@ -3,7 +3,7 @@ import {
   ListChecks,
   Plus,
   Trash2,
-  ShoppingBag,
+  ShoppingCart,
   Sparkles,
   ChevronRight,
   Heart,
@@ -160,7 +160,7 @@ export const ShoppingListsView: React.FC = () => {
                     onClick={() => addListToCart(activeList.id)}
                     className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
                   >
-                    <ShoppingBag className="w-3.5 h-3.5" />
+                    <ShoppingCart className="w-3.5 h-3.5" />
                     <span>Adicionar Lista Inteira ao Carrinho</span>
                   </button>
                 )}

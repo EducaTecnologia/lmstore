@@ -4,7 +4,7 @@ import {
   X,
   Send,
   Sparkles,
-  ShoppingBag,
+  ShoppingCart,
   Truck,
   HardHat,
   Clock,

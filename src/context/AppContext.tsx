@@ -924,7 +924,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   // Shopping Lists System
-  const createShoppingList = (title: string, icon = 'ShoppingBag', color = '#047857') => {
+  const createShoppingList = (title: string, icon = 'ShoppingCart', color = '#047857') => {
     const newList: ShoppingList = {
       id: `list-${Date.now()}`,
       userId: currentUser.id,

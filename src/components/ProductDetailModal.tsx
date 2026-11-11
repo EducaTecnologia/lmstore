@@ -21,7 +21,7 @@ import {
   ThumbsUp,
   Calculator,
   Ruler,
-  ShoppingBag
+  ShoppingCart
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
@@ -585,7 +585,7 @@ export const ProductDetailModal: React.FC = () => {
                           }}
                           className="w-full mt-2 py-2 bg-amber-500 hover:bg-amber-400 text-stone-950 font-black rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                         >
-                          <ShoppingBag className="w-3.5 h-3.5" />
+                          <ShoppingCart className="w-3.5 h-3.5" />
                           <span>Aplicar {recommendedQty} {selectedProduct.unit} e Adicionar ao Carrinho</span>
                         </button>
                       </div>

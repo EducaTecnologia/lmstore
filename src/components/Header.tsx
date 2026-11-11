@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   Search,
-  ShoppingBag,
+  ShoppingCart,
   MapPin,
   ChevronDown,
   X,
@@ -154,7 +154,7 @@ export const Header: React.FC<{ onOpenMobileMenu?: () => void }> = () => {
                 title="Ver Carrinho de Materiais"
               >
                 <div className="relative">
-                  <ShoppingBag className="w-4 h-4 text-slate-950" />
+                  <ShoppingCart className="w-4 h-4 text-slate-950" />
                   {cartCount > 0 && (
                     <span className="absolute -top-1.5 -right-2 bg-slate-950 text-amber-400 text-[10px] font-black w-4 h-4 rounded-full flex items-center justify-center font-mono-numbers shadow">
                       {cartCount}
@@ -275,7 +275,7 @@ export const Header: React.FC<{ onOpenMobileMenu?: () => void }> = () => {
                                 )}
                                 {notif.type === 'promo' && (
                                   <div className="w-7 h-7 rounded-xl bg-slate-900 text-amber-400 flex items-center justify-center font-bold">
-                                    <ShoppingBag className="w-3.5 h-3.5" />
+                                    <ShoppingCart className="w-3.5 h-3.5" />
                                   </div>
                                 )}
                                 {notif.type === 'stock' && (

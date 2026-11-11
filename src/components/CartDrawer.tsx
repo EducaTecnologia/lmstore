@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  ShoppingBag,
+  ShoppingCart,
   Trash2,
   Plus,
   Minus,
@@ -94,7 +94,7 @@ export const CartDrawer: React.FC = () => {
       {cart.length === 0 ? (
         <div className="py-16 text-center max-w-sm mx-auto">
           <div className="w-16 h-16 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center mx-auto mb-4 border border-amber-200">
-            <ShoppingBag className="w-8 h-8" />
+            <ShoppingCart className="w-8 h-8" />
           </div>
           <h2 className="font-display font-bold text-lg text-stone-900">
             Seu carrinho está vazio

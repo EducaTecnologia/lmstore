@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   TrendingUp,
-  ShoppingBag,
+  ShoppingCart,
   DollarSign,
   AlertTriangle,
   Users,
@@ -247,7 +247,7 @@ export const AdminDashboard: React.FC = () => {
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-stone-500">Pedidos Totais</span>
             <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
-              <ShoppingBag className="w-4 h-4" />
+              <ShoppingCart className="w-4 h-4" />
             </div>
           </div>
           <p className="text-2xl font-extrabold text-stone-900 mt-2 font-mono-numbers">

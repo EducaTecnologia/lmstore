@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   LayoutDashboard,
-  ShoppingBag,
+  ShoppingCart,
   Layers,
   DollarSign,
   Truck,
@@ -43,7 +43,7 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
     {
       id: 'operator_orders',
       label: 'Kanban de Pedidos',
-      icon: ShoppingBag,
+      icon: ShoppingCart,
       allowedRoles: ['admin', 'operator'],
     },
     {

@@ -3,7 +3,7 @@ import {
   Sparkles,
   X,
   HardHat,
-  ShoppingBag,
+  ShoppingCart,
   Calculator,
   CheckCircle2,
   Clock,
@@ -432,7 +432,7 @@ export const SmartAIAssistantModal: React.FC<{ isOpen: boolean; onClose: () => v
                     onClick={handleAddAllToCart}
                     className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-stone-950 rounded-xl font-black flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 shadow-sm"
                   >
-                    <ShoppingBag className="w-4 h-4 text-stone-950" />
+                    <ShoppingCart className="w-4 h-4 text-stone-950" />
                     <span>Adicionar Materiais ao Carrinho</span>
                   </button>
                 </div>
