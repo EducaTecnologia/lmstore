@@ -338,7 +338,7 @@ export const INITIAL_ORDERS: Order[] = [
       {
         productId: "prod-mat-3",
         productName: "Vergalhão CA-50 Nervurado 3/8\" (10.0mm) Gerdau Barra 12m",
-        productImage: "https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?w=600&auto=format&fit=crop&q=80",
+        productImage: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600&auto=format&fit=crop&q=80",
         unit: "br",
         unitPrice: 58.50,
         quantity: 5,

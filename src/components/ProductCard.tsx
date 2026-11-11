@@ -58,7 +58,7 @@ export const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
           alt={product.name}
           referrerPolicy="no-referrer"
           onError={(e) => {
-            e.currentTarget.src = 'https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?w=600&auto=format&fit=crop&q=80';
+            e.currentTarget.src = 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600&auto=format&fit=crop&q=80';
           }}
           className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
         />
