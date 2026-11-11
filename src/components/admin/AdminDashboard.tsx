@@ -140,7 +140,7 @@ export const AdminDashboard: React.FC = () => {
         isPerishable: true,
         rating: 5.0,
         reviewsCount: 1,
-        image: '/src/assets/images/category_hortifruti_1791242932222.jpg',
+        image: 'https://images.unsplash.com/photo-1541888946425-d0fbb186a5b3?w=600&auto=format&fit=crop&q=80',
         lots: [
           {
             id: `lot-${Date.now()}`,

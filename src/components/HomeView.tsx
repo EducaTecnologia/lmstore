@@ -228,9 +228,12 @@ export const HomeView: React.FC = () => {
             className="group relative rounded-2xl overflow-hidden aspect-[4/3] bg-slate-900 text-white cursor-pointer shadow-md"
           >
             <img
-              src="/src/assets/images/cat_estrutura_alvenaria_1794364474729.jpg"
+              src="https://images.unsplash.com/photo-1541888946425-d0fbb186a5b3?w=800&auto=format&fit=crop&q=80"
               alt="Estrutura e Alvenaria"
               referrerPolicy="no-referrer"
+              onError={(e) => {
+                e.currentTarget.src = 'https://images.unsplash.com/photo-1590069261209-f8e9b8642343?w=800&auto=format&fit=crop&q=80';
+              }}
               className="w-full h-full object-cover brightness-[0.75] group-hover:scale-105 transition-transform duration-300"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent" />
@@ -250,9 +253,12 @@ export const HomeView: React.FC = () => {
             className="group relative rounded-2xl overflow-hidden aspect-[4/3] bg-slate-900 text-white cursor-pointer shadow-md"
           >
             <img
-              src="/src/assets/images/cat_ferramentas_profissionais_1794364475410.jpg"
+              src="https://images.unsplash.com/photo-1504148455328-c376907d081c?w=800&auto=format&fit=crop&q=80"
               alt="Ferramentas e Equipamentos"
               referrerPolicy="no-referrer"
+              onError={(e) => {
+                e.currentTarget.src = 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=800&auto=format&fit=crop&q=80';
+              }}
               className="w-full h-full object-cover brightness-[0.75] group-hover:scale-105 transition-transform duration-300"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent" />
@@ -272,9 +278,12 @@ export const HomeView: React.FC = () => {
             className="group relative rounded-2xl overflow-hidden aspect-[4/3] bg-slate-900 text-white cursor-pointer shadow-md"
           >
             <img
-              src="/src/assets/images/cat_acabamento_porcelanatos_1794364475770.jpg"
+              src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&auto=format&fit=crop&q=80"
               alt="Pisos e Porcelanatos"
               referrerPolicy="no-referrer"
+              onError={(e) => {
+                e.currentTarget.src = 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=800&auto=format&fit=crop&q=80';
+              }}
               className="w-full h-full object-cover brightness-[0.75] group-hover:scale-105 transition-transform duration-300"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent" />

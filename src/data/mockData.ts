@@ -155,7 +155,7 @@ export const CATEGORIES: Category[] = [
     slug: 'estrutura-alvenaria',
     description: 'Cimento CP-II, CP-III, CP-V ARI, argamassas AC-I a AC-III, blocos de concreto e cerâmicos, vergalhões CA-50, areia, brita e escoras.',
     iconName: 'Building2',
-    image: '/src/assets/images/cat_estrutura_alvenaria_1794364474729.jpg',
+    image: 'https://images.unsplash.com/photo-1541888946425-d0fbb186a5b3?w=600&auto=format&fit=crop&q=80',
     itemCount: 86,
     featured: true,
     subcategories: [
@@ -206,7 +206,7 @@ export const CATEGORIES: Category[] = [
     slug: 'acabamento-pisos-revestimentos',
     description: 'Porcelanatos polidos e acetinados Portobello e Eliane, pisos vinílicos, cerâmicas de parede, rejuntes epóxi e niveladores Cortag.',
     iconName: 'Layers',
-    image: '/src/assets/images/cat_acabamento_porcelanatos_1794364475770.jpg',
+    image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&auto=format&fit=crop&q=80',
     itemCount: 142,
     featured: true,
     subcategories: [
@@ -254,7 +254,7 @@ export const CATEGORIES: Category[] = [
     slug: 'ferramentas-equipamentos-epis',
     description: 'Furadeiras e parafusadeiras a bateria Bosch, Makita e DeWalt, ferramentas Gedore e Tramontina, EPIs 3M e betoneiras.',
     iconName: 'Wrench',
-    image: '/src/assets/images/cat_ferramentas_profissionais_1794364475410.jpg',
+    image: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=600&auto=format&fit=crop&q=80',
     itemCount: 120,
     featured: true,
     subcategories: [
@@ -328,7 +328,7 @@ export const INITIAL_ORDERS: Order[] = [
       {
         productId: "prod-mat-1",
         productName: "Cimento Poty Todas as Obras CP-II-F 32 Votoran 50kg",
-        productImage: "/src/assets/images/cat_estrutura_alvenaria_1794364474729.jpg",
+        productImage: "https://images.unsplash.com/photo-1590069261209-f8e9b8642343?w=600&auto=format&fit=crop&q=80",
         unit: "sc",
         unitPrice: 34.90,
         quantity: 10,
@@ -338,7 +338,7 @@ export const INITIAL_ORDERS: Order[] = [
       {
         productId: "prod-mat-3",
         productName: "Vergalhão CA-50 Nervurado 3/8\" (10.0mm) Gerdau Barra 12m",
-        productImage: "/src/assets/images/cat_estrutura_alvenaria_1794364474729.jpg",
+        productImage: "https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?w=600&auto=format&fit=crop&q=80",
         unit: "br",
         unitPrice: 58.50,
         quantity: 5,
@@ -348,7 +348,7 @@ export const INITIAL_ORDERS: Order[] = [
       {
         productId: "prod-mat-2",
         productName: "Argamassa Assentamento e Reboco AC-II Quartzolit 20kg",
-        productImage: "/src/assets/images/cat_estrutura_alvenaria_1794364474729.jpg",
+        productImage: "https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?w=600&auto=format&fit=crop&q=80",
         unit: "sc",
         unitPrice: 22.90,
         quantity: 4,
@@ -423,7 +423,7 @@ export const INITIAL_ORDERS: Order[] = [
       {
         productId: "prod-mat-6",
         productName: "Tubo PVC Soldável 25mm (3/4\") Barra 6m Tigre Água Fria",
-        productImage: "/src/assets/images/cat_ferramentas_profissionais_1794364475410.jpg",
+        productImage: "https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=600&auto=format&fit=crop&q=80",
         unit: "br",
         unitPrice: 26.90,
         quantity: 6,
@@ -433,7 +433,7 @@ export const INITIAL_ORDERS: Order[] = [
       {
         productId: "prod-mat-11",
         productName: "Cabo Flexível 2,5mm² 750V Rolo 100m Azul SIL Fios",
-        productImage: "/src/assets/images/cat_ferramentas_profissionais_1794364475410.jpg",
+        productImage: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=600&auto=format&fit=crop&q=80",
         unit: "rolo",
         unitPrice: 189.90,
         quantity: 2,
@@ -495,7 +495,7 @@ export const INITIAL_ORDERS: Order[] = [
       {
         productId: "prod-mat-21",
         productName: "Tinta Acrílica Fosco Suvinil Rende e Cobre Muito 18L Branco Neve",
-        productImage: "/src/assets/images/cat_acabamento_porcelanatos_1794364475770.jpg",
+        productImage: "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=600&auto=format&fit=crop&q=80",
         unit: "un",
         unitPrice: 349.90,
         quantity: 2,
