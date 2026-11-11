@@ -18,7 +18,10 @@ import {
   Clock,
   Lock,
   MessageSquare,
-  ThumbsUp
+  ThumbsUp,
+  Calculator,
+  Ruler,
+  ShoppingBag
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
@@ -40,7 +43,13 @@ export const ProductDetailModal: React.FC = () => {
   const [quantity, setQuantity] = useState(1);
   const [cepInput, setCepInput] = useState('');
   const [shippingCalculated, setShippingCalculated] = useState(false);
-  const [activeTab, setActiveTab] = useState<'details' | 'specs' | 'reviews'>('details');
+  const [activeTab, setActiveTab] = useState<'details' | 'specs' | 'reviews' | 'calc'>('details');
+
+  // Calculator states
+  const [calcWidth, setCalcWidth] = useState<number>(4);
+  const [calcLength, setCalcLength] = useState<number>(5);
+  const [calcHeight, setCalcHeight] = useState<number>(2.8);
+  const [calcMargin, setCalcMargin] = useState<number>(10);
 
   // New review form
   const [newRating, setNewRating] = useState(5);
@@ -214,6 +223,17 @@ export const ProductDetailModal: React.FC = () => {
                 >
                   <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
                   <span>Avaliações ({reviews.length})</span>
+                </button>
+                <button
+                  onClick={() => setActiveTab('calc')}
+                  className={`font-bold pb-1 transition-colors flex items-center gap-1 cursor-pointer ${
+                    activeTab === 'calc'
+                      ? 'text-amber-700 border-b-2 border-amber-600'
+                      : 'text-stone-500 hover:text-stone-800'
+                  }`}
+                >
+                  <Calculator className="w-3.5 h-3.5 text-amber-600" />
+                  <span>Calculadora de Obra</span>
                 </button>
               </div>
 
@@ -453,6 +473,124 @@ export const ProductDetailModal: React.FC = () => {
                       </div>
                     ))}
                   </div>
+                </div>
+              )}
+
+              {activeTab === 'calc' && (
+                <div className="space-y-3.5 text-xs text-stone-700 animate-in fade-in">
+                  <div className="p-3 bg-amber-50 rounded-2xl border border-amber-200">
+                    <h4 className="font-display font-bold text-sm text-stone-900 flex items-center gap-1.5">
+                      <Ruler className="w-4 h-4 text-amber-600" />
+                      Calculadora de Área e Quantidade
+                    </h4>
+                    <p className="text-[11px] text-stone-600 mt-1">
+                      Informe as medidas do ambiente para calcular automaticamente a quantidade exata de <strong>{selectedProduct.name}</strong> necessária com margem de segurança.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <div>
+                      <label className="block text-[11px] font-bold text-stone-700 mb-1">Largura (m)</label>
+                      <input
+                        type="number"
+                        min="0.5"
+                        step="0.1"
+                        value={calcWidth}
+                        onChange={(e) => setCalcWidth(Number(e.target.value) || 0)}
+                        className="w-full px-3 py-1.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-mono-numbers focus:outline-none focus:border-amber-600"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-stone-700 mb-1">Comprimento (m)</label>
+                      <input
+                        type="number"
+                        min="0.5"
+                        step="0.1"
+                        value={calcLength}
+                        onChange={(e) => setCalcLength(Number(e.target.value) || 0)}
+                        className="w-full px-3 py-1.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-mono-numbers focus:outline-none focus:border-amber-600"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <div>
+                      <label className="block text-[11px] font-bold text-stone-700 mb-1">Altura Parede (m)</label>
+                      <input
+                        type="number"
+                        min="1"
+                        step="0.1"
+                        value={calcHeight}
+                        onChange={(e) => setCalcHeight(Number(e.target.value) || 0)}
+                        className="w-full px-3 py-1.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-mono-numbers focus:outline-none focus:border-amber-600"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-stone-700 mb-1">Margem de Recorte/Perda</label>
+                      <select
+                        value={calcMargin}
+                        onChange={(e) => setCalcMargin(Number(e.target.value))}
+                        className="w-full px-3 py-1.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-600"
+                      >
+                        <option value={5}>5% (Padrão)</option>
+                        <option value={10}>10% (Recomendado)</option>
+                        <option value={15}>15% (Diagonais/Recortes)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {(() => {
+                    const rawArea = calcWidth * calcLength;
+                    const totalAreaWithMargin = rawArea * (1 + calcMargin / 100);
+                    let recommendedQty = 1;
+                    let calcExplanation = '';
+
+                    if (selectedProduct.unit === 'sc') {
+                      recommendedQty = Math.max(1, Math.ceil(totalAreaWithMargin / 3.5));
+                      calcExplanation = `${recommendedQty} saco(s) de ${selectedProduct.weightValue} para cobrir ${totalAreaWithMargin.toFixed(1)}m²`;
+                    } else if (selectedProduct.unit === 'm2' || selectedProduct.categoryName.includes('Pisos') || selectedProduct.categoryName.includes('Acabamento')) {
+                      recommendedQty = Math.max(1, Math.ceil(totalAreaWithMargin));
+                      calcExplanation = `${recommendedQty} m² de revestimento para área de ${rawArea.toFixed(1)}m² + ${calcMargin}% perdas`;
+                    } else if (selectedProduct.unit === 'un' && selectedProduct.categoryName.includes('Tintas')) {
+                      recommendedQty = Math.max(1, Math.ceil((calcWidth * calcHeight * 4) / 110));
+                      calcExplanation = `${recommendedQty} unidade(s) para área de pintura estimada`;
+                    } else {
+                      recommendedQty = Math.max(1, Math.ceil(totalAreaWithMargin / 2));
+                      calcExplanation = `${recommendedQty} ${selectedProduct.unit} calculado(s) com folga técnica`;
+                    }
+
+                    const calcTotalCost = recommendedQty * currentPrice;
+
+                    return (
+                      <div className="p-3 bg-stone-900 text-white rounded-2xl space-y-2">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-stone-300">Área Calculada:</span>
+                          <span className="font-bold text-amber-400 font-mono-numbers">{rawArea.toFixed(1)} m² ({totalAreaWithMargin.toFixed(1)} m² com {calcMargin}%)</span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-stone-300">Quantidade Indicada:</span>
+                          <span className="font-black text-white font-mono-numbers text-sm">{recommendedQty} {selectedProduct.unit}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs pt-1 border-t border-stone-800">
+                          <span className="text-stone-400 text-[11px]">{calcExplanation}</span>
+                          <span className="font-black text-amber-400 text-sm font-mono-numbers">R$ {calcTotalCost.toFixed(2).replace('.', ',')}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setQuantity(recommendedQty);
+                            addToCart(selectedProduct, recommendedQty);
+                            showToast(`Adicionado ${recommendedQty} ${selectedProduct.unit} calculados ao carrinho!`, 'success');
+                            closeProductDetail();
+                          }}
+                          className="w-full mt-2 py-2 bg-amber-500 hover:bg-amber-400 text-stone-950 font-black rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                        >
+                          <ShoppingBag className="w-3.5 h-3.5" />
+                          <span>Aplicar {recommendedQty} {selectedProduct.unit} e Adicionar ao Carrinho</span>
+                        </button>
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
             </div>

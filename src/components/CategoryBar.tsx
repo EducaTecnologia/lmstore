@@ -1,9 +1,10 @@
 import React from 'react';
+import { Sparkles, Wand2 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { Category } from '../types';
 
 export const CategoryBar: React.FC = () => {
-  const { categories, selectedCategorySlug, setSelectedCategorySlug, setActiveView, t } = useApp();
+  const { categories, selectedCategorySlug, setSelectedCategorySlug, setActiveView, setBotOpen, t } = useApp();
 
   const handleSelectCategory = (category: Category) => {
     setSelectedCategorySlug(category.slug);
@@ -37,16 +38,16 @@ export const CategoryBar: React.FC = () => {
       <div className="flex items-center justify-between mb-3 px-1">
         <div>
           <h2 className="font-display font-bold text-lg sm:text-xl text-slate-900 tracking-tight">
-            {t.fieldDepartmentsTitle}
+            Departamentos da Construção Civil
           </h2>
           <p className="text-xs text-slate-500">
-            {t.fieldDepartmentsSub}
+            Navegue pelas 8 principais categorias e simule materiais com Assistente de IA
           </p>
         </div>
       </div>
 
-      {/* Responsive Horizontal Slider / Grid with 7 Categories */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2.5 sm:gap-3">
+      {/* Responsive Horizontal Grid with 8 Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-2.5 sm:gap-3">
         {categories.map((cat) => {
           const isSelected = selectedCategorySlug === cat.slug;
           const displayName = getCategoryName(cat);
@@ -84,6 +85,23 @@ export const CategoryBar: React.FC = () => {
             </button>
           );
         })}
+
+        {/* 8th Card: Assistente de IA & Simulador */}
+        <button
+          onClick={() => setBotOpen(true)}
+          className="group flex flex-col items-center text-center p-2.5 rounded-2xl transition-all duration-200 border border-amber-400/80 bg-gradient-to-br from-slate-900 via-slate-950 to-stone-900 text-white shadow-md hover:shadow-lg hover:border-amber-300 cursor-pointer relative overflow-hidden"
+        >
+          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center mb-2 shrink-0 border border-amber-400/30 group-hover:scale-105 transition-transform">
+            <Wand2 className="w-7 h-7 text-amber-400 animate-pulse" />
+          </div>
+          <span className="text-[11px] sm:text-xs font-black text-amber-300 group-hover:text-amber-200 line-clamp-1 flex items-center gap-1">
+            <Sparkles className="w-3 h-3 text-amber-400 shrink-0" />
+            Assistente de IA
+          </span>
+          <span className="text-[9px] text-stone-300 mt-0.5 font-medium">
+            Simulador 3D & Cores
+          </span>
+        </button>
       </div>
     </div>
   );
