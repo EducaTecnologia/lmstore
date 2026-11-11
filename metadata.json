@@ -1,0 +1,8 @@
+{
+  "name": "LM Store - Sua Loja Online de Materiais de Construção ",
+  "description": "LM Store é a plataforma e-commerce de materiais de construção mais completa do mercado. Cimentos, vergalhões, tubos e conexões, fios e cabos, porcelanatos, tintas e ferramentas das maiores marcas nacionais com entrega rápida no canteiro de obras e frota Munck dedicada.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
