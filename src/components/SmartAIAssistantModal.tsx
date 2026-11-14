@@ -26,7 +26,7 @@ export const SmartAIAssistantModal: React.FC<{ isOpen: boolean; onClose: () => v
   isOpen,
   onClose,
 }) => {
-  const { products, addToCart, showToast } = useApp();
+  const { products, addToCart, showToast, earnLoyaltyPoints } = useApp();
 
   const [activeTab, setActiveTab] = useState<'calculator' | 'wall_color' | '3d_material'>('calculator');
 
@@ -136,6 +136,8 @@ export const SmartAIAssistantModal: React.FC<{ isOpen: boolean; onClose: () => v
           matchingProductIds: ['prod-mat-1', 'prod-mat-3', 'prod-mat-2', 'prod-mat-5'],
         });
       }
+      earnLoyaltyPoints(15, 'ia', 'Cálculo técnico no Assistente IA Studio');
+      showToast('+15 pontos acumulados no Programa de Fidelidade LM!', 'info');
     }, 600);
   };
 
@@ -204,7 +206,8 @@ export const SmartAIAssistantModal: React.FC<{ isOpen: boolean; onClose: () => v
       }
       if (data.resultImage) {
         setRecolorResultImage(data.resultImage);
-        showToast(`Parede repintada com a cor "${selectedColorName}" por Inteligência Artificial!`, 'success');
+        earnLoyaltyPoints(15, 'ia', `Simulação de cor de parede IA (${selectedColorName})`);
+        showToast(`Parede repintada com "${selectedColorName}"! +15 pts na Fidelidade LM.`, 'success');
       }
     } catch {
       setRecolorLoading(false);
@@ -249,7 +252,8 @@ export const SmartAIAssistantModal: React.FC<{ isOpen: boolean; onClose: () => v
       }
       if (data.resultImage) {
         setSimulateResultImage(data.resultImage);
-        showToast(`Simulação 3D com ${selectedMaterial} gerada com sucesso!`, 'success');
+        earnLoyaltyPoints(15, 'ia', `Simulação 3D de materiais (${selectedMaterial})`);
+        showToast(`Simulação 3D gerada! +15 pts acumulados na Fidelidade LM.`, 'success');
       }
     } catch {
       setSimulateLoading(false);

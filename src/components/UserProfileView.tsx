@@ -54,10 +54,16 @@ export const UserProfileView: React.FC = () => {
     logout,
     showToast,
     openReportModal,
-    wishlistIds
+    wishlistIds,
+    loyaltyPoints,
+    loyaltyHistory,
+    loyaltyRewardsCatalog,
+    redeemedCoupons,
+    redeemLoyaltyReward,
+    applyCoupon
   } = useApp();
 
-  const [activeTab, setActiveTab] = useState<'overview' | 'orders' | 'addresses' | 'wallet' | 'coupons'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'loyalty' | 'orders' | 'addresses' | 'wallet' | 'coupons'>('overview');
   const [showAddressModal, setShowAddressModal] = useState(false);
   const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
   const [showCardModal, setShowCardModal] = useState(false);
@@ -113,10 +119,15 @@ export const UserProfileView: React.FC = () => {
     { id: 'pay-3', type: 'wallet', label: 'Carteira Digital LM Store Pay' },
   ];
 
-  const coupons: UserCoupon[] = currentUser.coupons || [
+  const baseCoupons: UserCoupon[] = currentUser.coupons || [
     { id: 'coup-1', code: 'LMOBRA10', discount: 10, type: 'percent', description: '10% OFF em toda a linha de cimento e argamassa', minOrder: 150, validUntil: '31/12/2026' },
-    { id: 'coup-2', code: 'FRETECAMPANHA', discount: 100, type: 'percent', description: 'Frete Munck Grátis para pedidos acima de R$ 300', minOrder: 300, validUntil: '31/12/2026' },
+    { id: 'coup-2', code: 'FRETECAMPANHA', discount: 100, type: 'shipping', description: 'Frete Munck Grátis para pedidos acima de R$ 300', minOrder: 300, validUntil: '31/12/2026' },
     { id: 'coup-3', code: 'PROVIP50', discount: 50, type: 'fixed', description: 'R$ 50 OFF exclusivo para construtores Clube Pro', minOrder: 400, validUntil: '31/12/2026' },
+  ];
+
+  const coupons: UserCoupon[] = [
+    ...redeemedCoupons,
+    ...baseCoupons.filter((bc) => !redeemedCoupons.some((rc) => rc.code === bc.code)),
   ];
 
   // Avatar Upload Handler via FileReader
@@ -437,14 +448,14 @@ export const UserProfileView: React.FC = () => {
           </div>
 
           <div
-            onClick={() => setActiveTab('overview')}
+            onClick={() => setActiveTab('loyalty')}
             className="bg-stone-900/80 hover:bg-stone-800/90 border border-stone-800 rounded-2xl p-3 cursor-pointer transition-colors"
           >
-            <p className="text-[10px] text-stone-400 font-bold uppercase tracking-wider flex items-center gap-1">
-              <Sparkles className="w-3 h-3 text-amber-400" /> Pontos Fidelidade
+            <p className="text-[10px] text-amber-400 font-bold uppercase tracking-wider flex items-center gap-1">
+              <Sparkles className="w-3 h-3 text-amber-400" /> Fidelidade LM
             </p>
             <p className="text-base sm:text-lg font-extrabold font-mono-numbers text-white mt-0.5">
-              {(currentUser.kmPoints || 1420).toLocaleString()} pts
+              {loyaltyPoints.toLocaleString('pt-BR')} pts
             </p>
           </div>
 
@@ -456,7 +467,7 @@ export const UserProfileView: React.FC = () => {
               <Ticket className="w-3 h-3 text-amber-400" /> Cupons Ativos
             </p>
             <p className="text-base sm:text-lg font-extrabold font-mono-numbers text-amber-400 mt-0.5">
-              {coupons.length} cupons disponíveis
+              {coupons.length} disponíveis
             </p>
           </div>
         </div>
@@ -561,10 +572,11 @@ export const UserProfileView: React.FC = () => {
         </form>
       )}
 
-      {/* Navigation Tabs (Overview, Pedidos, Endereços, Carteira, Cupons) */}
+      {/* Navigation Tabs (Overview, Fidelidade, Pedidos, Endereços, Carteira, Cupons) */}
       <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2 mb-6">
         {[
           { id: 'overview', label: 'Visão Geral', icon: UserIcon },
+          { id: 'loyalty', label: 'Fidelidade LM', icon: Award },
           { id: 'orders', label: 'Meus Pedidos', icon: Clock },
           { id: 'addresses', label: 'Endereços de Obra', icon: MapPin },
           { id: 'wallet', label: 'Carteira & Pagamentos', icon: CreditCard },
@@ -690,6 +702,24 @@ export const UserProfileView: React.FC = () => {
               </button>
 
               <button
+                onClick={() => setActiveTab('loyalty')}
+                className="w-full px-4 py-3 hover:bg-amber-50/60 rounded-2xl flex items-center justify-between text-left transition-colors cursor-pointer"
+              >
+                <div className="flex items-center gap-3.5">
+                  <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center">
+                    <Award className="w-4 h-4 text-amber-700" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-slate-800">Programa de Fidelidade LM</p>
+                    <p className="text-[11px] text-amber-700 font-semibold">
+                      {loyaltyPoints.toLocaleString('pt-BR')} pontos acumulados · Troque por cupons de desconto
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-amber-600" />
+              </button>
+
+              <button
                 onClick={() => setActiveView('wishlist')}
                 className="w-full px-4 py-3 hover:bg-slate-50 rounded-2xl flex items-center justify-between text-left transition-colors cursor-pointer"
               >
@@ -771,6 +801,168 @@ export const UserProfileView: React.FC = () => {
         </div>
       )}
 
+      {/* TAB: PROGRAMA DE FIDELIDADE LM */}
+      {activeTab === 'loyalty' && (
+        <div className="space-y-6">
+          {/* Loyalty Summary Card */}
+          <div className="bg-slate-950 rounded-3xl p-5 sm:p-6 text-white border border-slate-800 shadow-lg">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-500 text-slate-950 text-[10px] font-black uppercase tracking-wider">
+                  <Award className="w-3.5 h-3.5" />
+                  Programa de Fidelidade LM
+                </span>
+                <div className="flex items-baseline gap-2 mt-2">
+                  <span className="text-3xl sm:text-4xl font-extrabold font-mono-numbers text-white">
+                    {loyaltyPoints.toLocaleString('pt-BR')}
+                  </span>
+                  <span className="text-sm font-bold text-amber-400">pontos disponíveis</span>
+                </div>
+                <p className="text-xs text-slate-300 mt-1">
+                  Nível atual:{' '}
+                  <strong className="text-amber-400">
+                    {loyaltyPoints >= 700
+                      ? 'Mestre Ouro'
+                      : loyaltyPoints >= 300
+                      ? 'Construtor Prata'
+                      : 'Obra Bronze'}
+                  </strong>
+                </p>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <div className="bg-slate-900 border border-slate-800 rounded-xl p-2.5">
+                  <span className="text-xs font-extrabold text-amber-400 block">+1 pt / R$10</span>
+                  <span className="text-[10px] text-slate-400">Em compras</span>
+                </div>
+                <div className="bg-slate-900 border border-slate-800 rounded-xl p-2.5">
+                  <span className="text-xs font-extrabold text-amber-400 block">+35 pts</span>
+                  <span className="text-[10px] text-slate-400">Avaliações</span>
+                </div>
+                <div className="bg-slate-900 border border-slate-800 rounded-xl p-2.5">
+                  <span className="text-xs font-extrabold text-amber-400 block">+15 pts</span>
+                  <span className="text-[10px] text-slate-400">Uso da IA</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Rewards Catalog */}
+          <div className="space-y-3">
+            <h3 className="font-display font-bold text-sm text-slate-900">
+              Resgatar Cupons com Pontos
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              {loyaltyRewardsCatalog.map((reward) => {
+                const canRedeem = loyaltyPoints >= reward.pointsCost;
+                return (
+                  <div
+                    key={reward.id}
+                    className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs flex flex-col justify-between gap-3"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-extrabold text-slate-950">{reward.title}</span>
+                        <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-950 font-mono-numbers font-black text-[11px]">
+                          {reward.pointsCost} pts
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-600 mt-1.5 leading-relaxed">
+                        {reward.description}
+                      </p>
+                      <p className="text-[10px] text-slate-400 mt-1">
+                        Pedido mínimo: R$ {reward.minOrder.toFixed(2).replace('.', ',')}
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled={!canRedeem}
+                      onClick={() => redeemLoyaltyReward(reward.id)}
+                      className={`w-full py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                        canRedeem
+                          ? 'bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-xs'
+                          : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                      }`}
+                    >
+                      {canRedeem
+                        ? `Resgatar por ${reward.pointsCost} pontos`
+                        : `Faltam ${reward.pointsCost - loyaltyPoints} pontos`}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Redeemed Coupons Wallet */}
+          {redeemedCoupons.length > 0 && (
+            <div className="space-y-3">
+              <h3 className="font-display font-bold text-sm text-slate-900">
+                Meus Cupons Resgatados ({redeemedCoupons.length})
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {redeemedCoupons.map((coupon) => (
+                  <div
+                    key={coupon.id}
+                    className="bg-amber-50/70 rounded-2xl p-4 border border-amber-300 flex items-center justify-between gap-3"
+                  >
+                    <div className="min-w-0">
+                      <span className="font-mono font-black text-xs text-slate-950 bg-white px-2 py-0.5 rounded border border-amber-300 inline-block">
+                        {coupon.code}
+                      </span>
+                      <p className="text-xs font-bold text-slate-900 mt-1 truncate">
+                        {coupon.description}
+                      </p>
+                      <span className="text-[10px] text-slate-500">
+                        Mín. R$ {coupon.minOrder.toFixed(2).replace('.', ',')}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        applyCoupon(coupon.code);
+                        setActiveView('cart');
+                      }}
+                      className="px-3 py-2 rounded-xl bg-slate-950 hover:bg-slate-800 text-amber-400 text-xs font-bold shrink-0 cursor-pointer"
+                    >
+                      Aplicar
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Points History */}
+          <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs space-y-3">
+            <h3 className="font-display font-bold text-sm text-slate-900">
+              Extrato de Pontuação ({loyaltyHistory.length})
+            </h3>
+            <div className="divide-y divide-slate-100 max-h-64 overflow-y-auto">
+              {loyaltyHistory.map((item) => (
+                <div key={item.id} className="py-2.5 flex items-center justify-between gap-3 text-xs">
+                  <div className="min-w-0">
+                    <p className="font-semibold text-slate-900 truncate">{item.description}</p>
+                    <span className="text-[10px] text-slate-400">
+                      {item.date} · {item.source.toUpperCase()}
+                      {item.couponCode ? ` · Cupom ${item.couponCode}` : ''}
+                    </span>
+                  </div>
+                  <span
+                    className={`font-mono-numbers font-extrabold shrink-0 ${
+                      item.type === 'earn' ? 'text-amber-700' : 'text-red-600'
+                    }`}
+                  >
+                    {item.points > 0 ? `+${item.points}` : item.points} pts
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* TAB 2: MEUS PEDIDOS */}
       {activeTab === 'orders' && (
         <div className="space-y-4">
@@ -792,7 +984,12 @@ export const UserProfileView: React.FC = () => {
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                 <div>
                   <span className="text-xs font-bold text-slate-900">Pedido #{order.code}</span>
-                  <p className="text-[11px] text-slate-400">Entregue no canteiro em {order.address?.city || 'São Paulo'}</p>
+                  <p className="text-[11px] text-slate-400">
+                    Entrega no canteiro em {order.address?.city || 'São Paulo'}
+                    {order.scheduledDate && order.scheduledShift
+                      ? ` · Agendado: ${order.scheduledDate} (${order.scheduledShift})`
+                      : ''}
+                  </p>
                 </div>
                 <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-900 uppercase">
                   {order.status}
@@ -1048,7 +1245,10 @@ export const UserProfileView: React.FC = () => {
 
                   <button
                     onClick={() => {
-                      handleCopyCoupon(coupon.code);
+                      const res = applyCoupon(coupon.code);
+                      if (!res.success) {
+                        handleCopyCoupon(coupon.code);
+                      }
                       setActiveView('cart');
                     }}
                     className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl text-xs font-black shadow-xs transition-all cursor-pointer"

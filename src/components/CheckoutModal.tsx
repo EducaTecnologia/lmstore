@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   MapPin,
   Clock,
@@ -9,7 +9,9 @@ import {
   Copy,
   ChevronRight,
   ArrowLeft,
-  Truck
+  Truck,
+  Calendar,
+  CheckCircle2
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
@@ -23,12 +25,37 @@ export const CheckoutModal: React.FC = () => {
     showToast,
     isLoggedIn,
     setPostLoginRedirect,
-    t
   } = useApp();
 
+  const todayIso = new Date().toISOString().slice(0, 10);
+  const tomorrowDateObj = new Date();
+  tomorrowDateObj.setDate(tomorrowDateObj.getDate() + 1);
+  const tomorrowIso = tomorrowDateObj.toISOString().slice(0, 10);
+
+  const quickDateOptions = Array.from({ length: 5 }, (_, idx) => {
+    const d = new Date();
+    d.setDate(d.getDate() + idx);
+    const iso = d.toISOString().slice(0, 10);
+    const weekday = idx === 0
+      ? 'Hoje'
+      : idx === 1
+      ? 'Amanhã'
+      : d.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '');
+    const shortDate = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+    return { iso, weekday, shortDate };
+  });
+
+  const shiftOptions = [
+    { id: 'Primeira Carga (07:00 - 09:00)', title: 'Primeira Carga', hours: '07:00 - 09:00', note: 'Ideal para betonagem e equipe cedo' },
+    { id: 'Manhã (08:00 - 12:00)', title: 'Turno Manhã', hours: '08:00 - 12:00', note: 'Recebimento padrão em obra' },
+    { id: 'Tarde (13:00 - 17:00)', title: 'Turno Tarde', hours: '13:00 - 17:00', note: 'Descarregamento munck vespertino' },
+    { id: 'Fim de Tarde (17:00 - 19:00)', title: 'Fim de Tarde', hours: '17:00 - 19:00', note: 'Entrega estendida após expediente' },
+  ];
+
   const [step, setStep] = useState<1 | 2 | 3>(1);
-  const [deliveryWindow, setDeliveryWindow] = useState<'express' | 'scheduled'>('express');
-  const [scheduledTime, setScheduledTime] = useState('08:00 - 12:00 (Manhã)');
+  const [deliveryWindow, setDeliveryWindow] = useState<'scheduled' | 'express'>('scheduled');
+  const [scheduledDate, setScheduledDate] = useState<string>(tomorrowIso);
+  const [scheduledShift, setScheduledShift] = useState<string>('Manhã (08:00 - 12:00)');
   const [paymentMethod, setPaymentMethod] = useState<'pix' | 'credit_card' | 'money'>('pix');
   const [orderNotes, setOrderNotes] = useState('');
   const [copiedPix, setCopiedPix] = useState(false);
@@ -42,12 +69,32 @@ export const CheckoutModal: React.FC = () => {
   const [installments, setInstallments] = useState(1);
   const [moneyChange, setMoneyChange] = useState('');
 
-  // If user somehow accesses checkout without being logged in, redirect to login
+  useEffect(() => {
+    if (!isLoggedIn) {
+      setPostLoginRedirect('checkout');
+      setActiveView('login');
+    }
+  }, [isLoggedIn, setPostLoginRedirect, setActiveView]);
+
   if (!isLoggedIn) {
-    setPostLoginRedirect('checkout');
-    setActiveView('login');
     return null;
   }
+
+  const formatBrDate = (isoDate: string) => {
+    if (!isoDate || !isoDate.includes('-')) return isoDate;
+    const [y, m, d] = isoDate.split('-');
+    return `${d}/${m}/${y}`;
+  };
+
+  const effectiveDateLabel =
+    deliveryWindow === 'express'
+      ? `Hoje (${formatBrDate(todayIso)})`
+      : formatBrDate(scheduledDate);
+
+  const effectiveShiftLabel =
+    deliveryWindow === 'express'
+      ? 'Entrega Expressa (3 a 5h)'
+      : scheduledShift;
 
   const pixPayload = `00020126580014BR.GOV.BCB.PIX0136pix@lmstore.com.br520400005303986540${cartTotal.toFixed(2)}5802BR5920LM STORE MATERIAIS6009SAO PAULO62070503***6304`;
 
@@ -66,6 +113,8 @@ export const CheckoutModal: React.FC = () => {
         paymentMethod,
         address: currentAddress,
         notes: orderNotes,
+        scheduledDate: effectiveDateLabel,
+        scheduledShift: effectiveShiftLabel,
       });
     }, 1200);
   };
@@ -75,7 +124,7 @@ export const CheckoutModal: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between pb-4 border-b border-stone-200">
         <button
-          onClick={() => (step > 1 ? setStep((s) => (s - 1) as any) : setActiveView('cart'))}
+          onClick={() => (step > 1 ? setStep((s) => (s - 1) as 1 | 2 | 3) : setActiveView('cart'))}
           className="inline-flex items-center gap-1.5 text-xs text-stone-600 hover:text-amber-600 font-medium cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -177,78 +226,176 @@ export const CheckoutModal: React.FC = () => {
         </div>
       )}
 
-      {/* STEP 2: HORÁRIO DE ENTREGA */}
+      {/* STEP 2: SELETOR DE DATA E TURNO DE ENTREGA */}
       {step === 2 && (
-        <div className="bg-white rounded-2xl border border-stone-200 p-5 shadow-xs space-y-4">
-          <div className="flex items-center gap-2 pb-3 border-b border-stone-100">
-            <Clock className="w-5 h-5 text-amber-600" />
-            <h3 className="font-display font-bold text-base text-stone-900">
-              Selecione o Tipo de Envio
-            </h3>
+        <div className="bg-white rounded-2xl border border-stone-200 p-5 shadow-xs space-y-5">
+          <div className="flex items-center justify-between gap-2 pb-3 border-b border-stone-100">
+            <div className="flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-amber-600" />
+              <div>
+                <h3 className="font-display font-bold text-base text-stone-900">
+                  Agende Data e Turno na Obra
+                </h3>
+                <p className="text-[11px] text-stone-500">
+                  Garanta a presença do responsável pelo recebimento e descarregamento dos materiais.
+                </p>
+              </div>
+            </div>
+            <span className="text-xs font-extrabold text-amber-900 bg-amber-100 px-2.5 py-1 rounded-lg font-mono-numbers shrink-0">
+              {cartDeliveryFee === 0 ? 'Frete Grátis' : `Frete R$ ${cartDeliveryFee.toFixed(2).replace('.', ',')}`}
+            </span>
           </div>
 
+          {/* Delivery Mode Toggle */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div
-              onClick={() => setDeliveryWindow('express')}
-              className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                deliveryWindow === 'express'
-                  ? 'border-amber-500 bg-amber-50/60 shadow-xs'
-                  : 'border-stone-200 hover:border-stone-300'
-              }`}
-            >
-              <div className="flex items-center justify-between mb-1">
-                <span className="font-bold text-xs text-stone-900 flex items-center gap-1">
-                  <Truck className="w-4 h-4 text-amber-600" />
-                  Entrega Prioritária
-                </span>
-                <span className="text-[10px] bg-amber-400 text-stone-950 font-extrabold px-1.5 py-0.5 rounded">
-                  Hoje (3 a 5h)
-                </span>
-              </div>
-              <p className="text-xs text-stone-600 mt-1">
-                Carregamento prioritário no Centro de Distribuição LM Store e descarregamento no canteiro.
-              </p>
-              <p className="text-xs font-bold text-amber-900 mt-2 font-mono-numbers">
-                {cartDeliveryFee === 0 ? 'Grátis' : `R$ ${cartDeliveryFee.toFixed(2).replace('.', ',')}`}
-              </p>
-            </div>
-
-            <div
+            <button
+              type="button"
               onClick={() => setDeliveryWindow('scheduled')}
-              className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+              className={`p-3.5 rounded-xl border-2 text-left cursor-pointer transition-all ${
                 deliveryWindow === 'scheduled'
-                  ? 'border-amber-500 bg-amber-50/60 shadow-xs'
-                  : 'border-stone-200 hover:border-stone-300'
+                  ? 'border-amber-500 bg-amber-50/70 shadow-xs'
+                  : 'border-stone-200 hover:border-stone-300 bg-white'
               }`}
             >
               <div className="flex items-center justify-between mb-1">
-                <span className="font-bold text-xs text-stone-900 flex items-center gap-1">
-                  <Clock className="w-4 h-4 text-amber-600" />
-                  Janela Programada
+                <span className="font-bold text-xs text-stone-900 flex items-center gap-1.5">
+                  <Calendar className="w-4 h-4 text-amber-600" />
+                  Agendar Data e Turno
                 </span>
-                <span className="text-[10px] bg-stone-200 text-stone-700 font-bold px-1.5 py-0.5 rounded">
-                  Amanhã
+                <span className="text-[10px] bg-slate-950 text-amber-400 font-bold px-2 py-0.5 rounded">
+                  Recomendado
                 </span>
               </div>
-              <p className="text-xs text-stone-600 mt-1">
-                Escolha a melhor janela com a presença do seu mestre de obras.
+              <p className="text-[11px] text-stone-600 leading-snug">
+                Escolha o dia exato e o turno em que sua equipe estará no canteiro.
               </p>
-              <select
-                disabled={deliveryWindow !== 'scheduled'}
-                value={scheduledTime}
-                onChange={(e) => setScheduledTime(e.target.value)}
-                className="mt-2 w-full bg-white border border-stone-200 rounded-lg p-1.5 text-xs text-stone-800"
-              >
-                <option value="08:00 - 12:00 (Manhã)">08:00 - 12:00 (Manhã)</option>
-                <option value="13:00 - 17:00 (Tarde)">13:00 - 17:00 (Tarde)</option>
-                <option value="Primeira Carga (07:00)">Primeira Carga (07:00)</option>
-              </select>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setDeliveryWindow('express')}
+              className={`p-3.5 rounded-xl border-2 text-left cursor-pointer transition-all ${
+                deliveryWindow === 'express'
+                  ? 'border-amber-500 bg-amber-50/70 shadow-xs'
+                  : 'border-stone-200 hover:border-stone-300 bg-white'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-1">
+                <span className="font-bold text-xs text-stone-900 flex items-center gap-1.5">
+                  <Truck className="w-4 h-4 text-amber-600" />
+                  Entrega Expressa Hoje
+                </span>
+                <span className="text-[10px] bg-amber-400 text-stone-950 font-extrabold px-2 py-0.5 rounded">
+                  3 a 5 horas
+                </span>
+              </div>
+              <p className="text-[11px] text-stone-600 leading-snug">
+                Carregamento imediato no CD LM Store para entrega ainda hoje.
+              </p>
+            </button>
+          </div>
+
+          {/* Date + Shift Picker when Scheduled */}
+          {deliveryWindow === 'scheduled' && (
+            <div className="space-y-4 pt-1 animate-in fade-in">
+              {/* Date Selector */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <label className="text-xs font-bold text-stone-800 flex items-center gap-1.5">
+                    <Calendar className="w-3.5 h-3.5 text-amber-600" />
+                    <span>1. Selecione a Data da Entrega:</span>
+                  </label>
+                  <input
+                    type="date"
+                    min={todayIso}
+                    value={scheduledDate}
+                    onChange={(e) => setScheduledDate(e.target.value || tomorrowIso)}
+                    aria-label="Selecionar data no calendário"
+                    className="px-2.5 py-1 bg-stone-50 border border-stone-300 rounded-lg text-xs font-mono-numbers font-semibold text-stone-800 focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+
+                <div className="grid grid-cols-5 gap-2">
+                  {quickDateOptions.map((opt) => {
+                    const isSelected = scheduledDate === opt.iso;
+                    return (
+                      <button
+                        key={opt.iso}
+                        type="button"
+                        onClick={() => setScheduledDate(opt.iso)}
+                        className={`p-2 rounded-xl border text-center transition-all cursor-pointer ${
+                          isSelected
+                            ? 'bg-slate-950 border-slate-950 text-white shadow-xs'
+                            : 'bg-stone-50 hover:bg-amber-50 border-stone-200 text-stone-700'
+                        }`}
+                      >
+                        <span className={`block text-[10px] uppercase font-bold ${isSelected ? 'text-amber-400' : 'text-stone-500'}`}>
+                          {opt.weekday}
+                        </span>
+                        <span className="block text-xs font-extrabold font-mono-numbers mt-0.5">
+                          {opt.shortDate}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Shift Selector */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-stone-800 flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5 text-amber-600" />
+                  <span>2. Escolha o Turno de Descarregamento:</span>
+                </label>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {shiftOptions.map((shift) => {
+                    const isSelected = scheduledShift === shift.id;
+                    return (
+                      <button
+                        key={shift.id}
+                        type="button"
+                        onClick={() => setScheduledShift(shift.id)}
+                        className={`p-3 rounded-xl border-2 text-left transition-all cursor-pointer flex items-start justify-between gap-2 ${
+                          isSelected
+                            ? 'border-amber-500 bg-amber-50/70'
+                            : 'border-stone-200 hover:border-stone-300 bg-white'
+                        }`}
+                      >
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs font-extrabold text-stone-900">{shift.title}</span>
+                            <span className="text-[10px] font-mono-numbers font-bold bg-stone-100 text-stone-700 px-1.5 py-0.5 rounded">
+                              {shift.hours}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-stone-500 mt-1">{shift.note}</p>
+                        </div>
+                        {isSelected && <CheckCircle2 className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Selected Window Live Summary */}
+          <div className="p-3 rounded-xl bg-slate-950 text-white flex items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-2">
+              <Truck className="w-4 h-4 text-amber-400 shrink-0" />
+              <span>
+                Programação selecionada:{' '}
+                <strong className="text-amber-400">
+                  {effectiveDateLabel} · {effectiveShiftLabel}
+                </strong>
+              </span>
             </div>
           </div>
 
           <button
             onClick={() => setStep(3)}
-            className="w-full mt-4 py-3 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs rounded-xl shadow-md transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+            className="w-full mt-2 py-3 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs rounded-xl shadow-md transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
           >
             <span>Avançar para Pagamento</span>
             <ChevronRight className="w-4 h-4" />

@@ -25,7 +25,11 @@ import {
   Share2,
   Copy,
   Check,
-  Heart
+  Heart,
+  BellRing,
+  Mail,
+  Bell,
+  PackageX
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { OptimizedImage } from './OptimizedImage';
@@ -44,7 +48,10 @@ export const ProductDetailModal: React.FC = () => {
     isLoggedIn,
     setPostLoginRedirect,
     isInWishlist,
-    toggleWishlist
+    toggleWishlist,
+    currentUser,
+    subscribeStockAlert,
+    isSubscribedToStockAlert
   } = useApp();
 
   const [quantity, setQuantity] = useState(1);
@@ -61,14 +68,19 @@ export const ProductDetailModal: React.FC = () => {
   // New review form
   const [newRating, setNewRating] = useState(5);
   const [newComment, setNewComment] = useState('');
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [alertEmail, setAlertEmail] = useState(currentUser.email || '');
+  const [alertChannel, setAlertChannel] = useState<'both' | 'push' | 'email'>('both');
 
   if (!selectedProduct) return null;
+
+  const isOutOfStock = selectedProduct.stock <= 0;
+  const isAlertActive = isSubscribedToStockAlert(selectedProduct.id);
 
   const currentPrice = selectedProduct.salePrice ?? selectedProduct.price;
   const hasDiscount = selectedProduct.salePrice !== undefined && selectedProduct.salePrice < selectedProduct.price;
   const activeLot = selectedProduct.lots[0];
   const reviews = getProductReviews(selectedProduct.id);
-  const [copiedLink, setCopiedLink] = useState(false);
 
   const productUrl =
     typeof window !== 'undefined'
@@ -413,21 +425,42 @@ export const ProductDetailModal: React.FC = () => {
                   </p>
 
                   {/* Inventory & Pallet Info */}
-                  <div className="mt-4 p-3 bg-stone-50 rounded-xl border border-stone-200 text-xs text-stone-600">
+                  <div className={`mt-4 p-3 rounded-xl border text-xs ${
+                    isOutOfStock
+                      ? 'bg-red-50/70 border-red-200 text-red-900'
+                      : 'bg-stone-50 border-stone-200 text-stone-600'
+                  }`}>
                     <div className="flex items-center justify-between font-semibold text-stone-800 mb-1">
                       <span className="flex items-center gap-1.5">
-                        <Layers className="w-3.5 h-3.5 text-amber-600" />
-                        Disponibilidade Imediata:
+                        {isOutOfStock ? (
+                          <PackageX className="w-3.5 h-3.5 text-red-600" />
+                        ) : (
+                          <Layers className="w-3.5 h-3.5 text-amber-600" />
+                        )}
+                        {isOutOfStock ? 'Status no Centro de Distribuição:' : 'Disponibilidade Imediata:'}
                       </span>
-                      <span className="text-emerald-700 font-mono-numbers font-bold">
-                        {selectedProduct.stock} {selectedProduct.unit} em estoque
-                      </span>
+                      {isOutOfStock ? (
+                        <span className="text-red-700 font-mono-numbers font-extrabold">
+                          Esgotado no CD (0 {selectedProduct.unit})
+                        </span>
+                      ) : (
+                        <span className="text-emerald-700 font-mono-numbers font-bold">
+                          {selectedProduct.stock} {selectedProduct.unit} em estoque
+                        </span>
+                      )}
                     </div>
                     <div className="flex items-center gap-3 text-[11px] text-stone-500 mt-1">
-                      <span className="flex items-center gap-1">
-                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                        Pronta entrega no CD / Envio para canteiro
-                      </span>
+                      {isOutOfStock ? (
+                        <span className="flex items-center gap-1 text-red-700 font-medium">
+                          <BellRing className="w-3 h-3 text-red-600" />
+                          Cadastre seu aviso abaixo para receber Push e e-mail na reposição.
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                          Pronta entrega no CD / Envio para canteiro
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -725,47 +758,135 @@ export const ProductDetailModal: React.FC = () => {
               )}
             </div>
 
-            {/* Actions Bar */}
+            {/* Actions Bar OR Back-in-Stock Subscription */}
             <div className="mt-6 pt-4 border-t border-stone-200 flex flex-col gap-2.5">
-              <div className="flex items-center gap-3">
-                {/* Quantity Stepper */}
-                <div className="flex items-center border border-stone-300 rounded-xl p-1 bg-stone-50">
-                  <button
-                    onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                    className="w-8 h-8 rounded-lg flex items-center justify-center text-stone-600 hover:bg-white transition-colors cursor-pointer"
-                  >
-                    <Minus className="w-3.5 h-3.5" />
-                  </button>
-                  <span className="w-8 text-center text-sm font-bold font-mono-numbers text-stone-900">
-                    {quantity}
-                  </span>
-                  <button
-                    onClick={() => setQuantity((q) => Math.min(selectedProduct.stock, q + 1))}
-                    className="w-8 h-8 rounded-lg flex items-center justify-center text-stone-600 hover:bg-white transition-colors cursor-pointer"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-
-                {/* Add to Cart */}
-                <button
-                  onClick={handleAddToCart}
-                  className="flex-1 py-3 px-4 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-900 text-xs font-bold transition-colors cursor-pointer"
+              {isOutOfStock ? (
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    subscribeStockAlert(selectedProduct, alertEmail, alertChannel);
+                  }}
+                  className="p-3.5 rounded-2xl bg-slate-950 text-white space-y-2.5 border border-slate-800"
                 >
-                  Adicionar ao Carrinho
-                </button>
-              </div>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <BellRing className="w-4 h-4 text-amber-400 shrink-0" />
+                      <span className="text-xs font-extrabold text-white">
+                        Avise-me quando chegar
+                      </span>
+                    </div>
+                    {isAlertActive && (
+                      <span className="text-[10px] font-bold bg-amber-500 text-slate-950 px-2 py-0.5 rounded-full flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3" />
+                        Alerta Ativado
+                      </span>
+                    )}
+                  </div>
 
-              {/* Buy Now Button */}
-              <button
-                onClick={handleBuyNow}
-                className="w-full py-3 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-stone-950 text-xs font-black shadow-md transition-colors flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
-              >
-                <span>Comprar Agora</span>
-                <span className="font-mono-numbers font-medium text-stone-900">
-                  (R$ {(currentPrice * quantity).toFixed(2).replace('.', ',')})
-                </span>
-              </button>
+                  <p className="text-[11px] text-slate-300 leading-snug">
+                    Disparamos um alerta Push e/ou e-mail automático assim que este material der entrada no almoxarifado.
+                  </p>
+
+                  <div className="grid grid-cols-3 gap-1.5 text-[11px]">
+                    <button
+                      type="button"
+                      onClick={() => setAlertChannel('both')}
+                      className={`py-1.5 px-2 rounded-lg border font-semibold flex items-center justify-center gap-1 cursor-pointer transition-colors ${
+                        alertChannel === 'both'
+                          ? 'bg-amber-500 text-slate-950 border-amber-400 font-bold'
+                          : 'bg-slate-900 text-slate-300 border-slate-700 hover:border-slate-500'
+                      }`}
+                    >
+                      <BellRing className="w-3 h-3" />
+                      <span>Push + E-mail</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAlertChannel('push')}
+                      className={`py-1.5 px-2 rounded-lg border font-semibold flex items-center justify-center gap-1 cursor-pointer transition-colors ${
+                        alertChannel === 'push'
+                          ? 'bg-amber-500 text-slate-950 border-amber-400 font-bold'
+                          : 'bg-slate-900 text-slate-300 border-slate-700 hover:border-slate-500'
+                      }`}
+                    >
+                      <Bell className="w-3 h-3" />
+                      <span>Só Push</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAlertChannel('email')}
+                      className={`py-1.5 px-2 rounded-lg border font-semibold flex items-center justify-center gap-1 cursor-pointer transition-colors ${
+                        alertChannel === 'email'
+                          ? 'bg-amber-500 text-slate-950 border-amber-400 font-bold'
+                          : 'bg-slate-900 text-slate-300 border-slate-700 hover:border-slate-500'
+                      }`}
+                    >
+                      <Mail className="w-3 h-3" />
+                      <span>Só E-mail</span>
+                    </button>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <input
+                      type="email"
+                      required
+                      placeholder="Digite seu e-mail para aviso..."
+                      value={alertEmail}
+                      onChange={(e) => setAlertEmail(e.target.value)}
+                      className="flex-1 px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs placeholder:text-slate-400 focus:outline-none focus:border-amber-500"
+                    />
+                    <button
+                      type="submit"
+                      className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black flex items-center justify-center gap-1.5 transition-colors cursor-pointer shrink-0"
+                    >
+                      <BellRing className="w-3.5 h-3.5" />
+                      <span>{isAlertActive ? 'Atualizar Aviso' : 'Avise-me'}</span>
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <>
+                  <div className="flex items-center gap-3">
+                    {/* Quantity Stepper */}
+                    <div className="flex items-center border border-stone-300 rounded-xl p-1 bg-stone-50">
+                      <button
+                        onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                        className="w-8 h-8 rounded-lg flex items-center justify-center text-stone-600 hover:bg-white transition-colors cursor-pointer"
+                      >
+                        <Minus className="w-3.5 h-3.5" />
+                      </button>
+                      <span className="w-8 text-center text-sm font-bold font-mono-numbers text-stone-900">
+                        {quantity}
+                      </span>
+                      <button
+                        onClick={() => setQuantity((q) => Math.min(selectedProduct.stock, q + 1))}
+                        className="w-8 h-8 rounded-lg flex items-center justify-center text-stone-600 hover:bg-white transition-colors cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    {/* Add to Cart */}
+                    <button
+                      onClick={handleAddToCart}
+                      className="flex-1 py-3 px-4 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-900 text-xs font-bold transition-colors cursor-pointer"
+                    >
+                      Adicionar ao Carrinho
+                    </button>
+                  </div>
+
+                  {/* Buy Now Button */}
+                  <button
+                    onClick={handleBuyNow}
+                    className="w-full py-3 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-stone-950 text-xs font-black shadow-md transition-colors flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
+                  >
+                    <span>Comprar Agora</span>
+                    <span className="font-mono-numbers font-medium text-stone-900">
+                      (R$ {(currentPrice * quantity).toFixed(2).replace('.', ',')})
+                    </span>
+                  </button>
+                </>
+              )}
             </div>
 
           </div>

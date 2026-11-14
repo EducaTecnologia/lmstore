@@ -260,6 +260,14 @@ export const OrderTrackingView: React.FC = () => {
                 <span className="text-stone-500">Distância / Trânsito:</span>
                 <span className="font-bold text-amber-800">{order.distanceKm} km · Tráfego Moderado</span>
               </div>
+              {order.scheduledDate && order.scheduledShift && (
+                <div className="flex justify-between pt-2 border-t border-stone-200">
+                  <span className="text-stone-500">Agendamento na Obra:</span>
+                  <span className="font-bold text-slate-950">
+                    {order.scheduledDate} · {order.scheduledShift}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 

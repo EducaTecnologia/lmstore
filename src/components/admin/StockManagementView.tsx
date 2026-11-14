@@ -11,14 +11,16 @@ import {
   Filter,
   X,
   FileText,
-  Trash2
+  Trash2,
+  BellRing,
+  PackagePlus
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { Product } from '../../types';
 import { OptimizedImage } from '../OptimizedImage';
 
 export const StockManagementView: React.FC = () => {
-  const { products, addInventoryLot, deleteInventoryLot, openReportModal, showToast } = useApp();
+  const { products, addInventoryLot, deleteInventoryLot, openReportModal, showToast, stockAlerts } = useApp();
 
   const [searchFilter, setSearchFilter] = useState('');
   const [selectedProductForLot, setSelectedProductForLot] = useState<Product | null>(null);
@@ -29,7 +31,7 @@ export const StockManagementView: React.FC = () => {
   const [lotQuantity, setLotQuantity] = useState(25);
   const [lotUnitCost, setLotUnitCost] = useState(6.50);
   const [lotExpiration, setLotExpiration] = useState('2026-11-15');
-  const [lotSupplier, setLotSupplier] = useState('Cooperativa Agro Familiar');
+  const [lotSupplier, setLotSupplier] = useState('Votorantim / Fornecedor Homologado');
 
   const filteredProducts = products.filter((p) =>
     p.name.toLowerCase().includes(searchFilter.toLowerCase()) ||
@@ -148,6 +150,9 @@ export const StockManagementView: React.FC = () => {
                 const activeLot = p.lots[0];
                 const isCritical = p.stock <= p.minStock;
                 const isExcess = p.stock >= p.maxStock;
+                const pendingAlertsCount = stockAlerts.filter(
+                  (a) => a.productId === p.id && !a.notified
+                ).length;
 
                 return (
                   <tr key={p.id} className="hover:bg-stone-50/60 transition-colors">
@@ -164,9 +169,17 @@ export const StockManagementView: React.FC = () => {
                         />
                         <div>
                           <p className="font-bold text-stone-900">{p.name}</p>
-                          <span className="text-[10px] text-stone-400">
-                            {p.categoryName} · SKU: {p.sku}
-                          </span>
+                          <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
+                            <span className="text-[10px] text-stone-400">
+                              {p.categoryName} · SKU: {p.sku}
+                            </span>
+                            {pendingAlertsCount > 0 && (
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-300 text-[10px] font-bold">
+                                <BellRing className="w-2.5 h-2.5 text-amber-700" />
+                                {pendingAlertsCount} aguardando aviso
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </td>
@@ -176,7 +189,11 @@ export const StockManagementView: React.FC = () => {
                     </td>
 
                     <td className="py-3 px-4">
-                      {isCritical ? (
+                      {p.stock <= 0 ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-600 text-white">
+                          Esgotado (0 {p.unit})
+                        </span>
+                      ) : isCritical ? (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-50 text-red-700 border border-red-200">
                           Abaixo do Mín ({p.minStock})
                         </span>
@@ -192,7 +209,7 @@ export const StockManagementView: React.FC = () => {
                     </td>
 
                     <td className="py-3 px-4 font-mono text-[11px] text-slate-700 font-semibold">
-                      {activeLot?.lotNumber || 'LM-PADRAO'}
+                      {activeLot?.lotNumber || 'SEM LOTE'}
                     </td>
 
                     <td className="py-3 px-4 text-slate-600 font-mono-numbers">
@@ -211,13 +228,33 @@ export const StockManagementView: React.FC = () => {
                     </td>
 
                     <td className="py-3 px-4 text-right">
-                      <button
-                        onClick={() => handleOpenLotModal(p)}
-                        className="px-2.5 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-lg text-xs transition-colors flex items-center gap-1 ml-auto cursor-pointer"
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                        <span>Receber Lote</span>
-                      </button>
+                      <div className="flex items-center justify-end gap-1.5">
+                        {p.stock <= 0 && (
+                          <button
+                            onClick={() =>
+                              addInventoryLot(p.id, {
+                                lotNumber: `LT-${new Date().getFullYear()}-REP-${Math.floor(10 + Math.random() * 89)}`,
+                                quantity: 20,
+                                unitCost: Math.round((p.salePrice ?? p.price) * 0.65 * 100) / 100,
+                                expirationDate: '2027-06-30',
+                                supplier: p.brand || p.producer || 'Fornecedor Homologado',
+                              })
+                            }
+                            className="px-2.5 py-1.5 bg-slate-950 hover:bg-slate-800 text-amber-400 font-bold rounded-lg text-xs transition-colors flex items-center gap-1 cursor-pointer"
+                            title="Repor +20 unidades e disparar avisos Push/E-mail automáticos"
+                          >
+                            <PackagePlus className="w-3.5 h-3.5" />
+                            <span>Repor +20</span>
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleOpenLotModal(p)}
+                          className="px-2.5 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-lg text-xs transition-colors flex items-center gap-1 cursor-pointer"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>Receber Lote</span>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );

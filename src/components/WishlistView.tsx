@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Heart,
   ShoppingCart,
@@ -7,10 +7,14 @@ import {
   Star,
   Truck,
   PackageOpen,
-  ArrowRight
+  ArrowRight,
+  BellRing,
+  CheckCircle2
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { Product } from '../types';
 import { OptimizedImage } from './OptimizedImage';
+import { StockAlertModal } from './StockAlertModal';
 
 export const WishlistView: React.FC = () => {
   const {
@@ -23,7 +27,10 @@ export const WishlistView: React.FC = () => {
     openProductDetail,
     setActiveView,
     setSelectedCategorySlug,
+    isSubscribedToStockAlert,
   } = useApp();
+
+  const [alertProduct, setAlertProduct] = useState<Product | null>(null);
 
   const wishlistProducts = wishlistIds
     .map((id) => products.find((p) => p.id === id))
@@ -81,7 +88,7 @@ export const WishlistView: React.FC = () => {
               className="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all active:scale-95 cursor-pointer"
             >
               <ShoppingCart className="w-3.5 h-3.5" />
-              <span>Adicionar Tudo ao Carrinho</span>
+              <span>Adicionar Disponíveis ao Carrinho</span>
             </button>
           </div>
         )}
@@ -119,6 +126,8 @@ export const WishlistView: React.FC = () => {
               ? Math.round(((product.price - product.salePrice!) / product.price) * 100)
               : 0;
             const installmentValue = (currentPrice / 10).toFixed(2).replace('.', ',');
+            const isOutOfStock = product.stock <= 0;
+            const isAlertActive = isSubscribedToStockAlert(product.id);
 
             return (
               <article
@@ -137,8 +146,16 @@ export const WishlistView: React.FC = () => {
                     quality={75}
                     categoryHint={product.categoryId}
                     className="w-full h-full"
-                    imgClassName="w-full h-full object-cover object-center group-hover:scale-[1.03] transition-transform duration-300"
+                    imgClassName={`w-full h-full object-cover object-center group-hover:scale-[1.03] transition-transform duration-300 ${
+                      isOutOfStock ? 'grayscale opacity-75' : ''
+                    }`}
                   />
+
+                  {isOutOfStock && (
+                    <span className="absolute top-2 left-2 bg-red-600 text-white text-[10px] font-extrabold px-2 py-0.5 rounded uppercase tracking-wide shadow-xs">
+                      Esgotado
+                    </span>
+                  )}
 
                   <button
                     type="button"
@@ -196,20 +213,53 @@ export const WishlistView: React.FC = () => {
                       <p className="text-[10px] text-slate-600 mt-0.5">
                         em <span className="font-semibold text-slate-800">10x R$ {installmentValue}</span> sem juros
                       </p>
-                      <div className="mt-1 flex items-center gap-1 text-[10px] font-bold text-amber-700">
-                        <Truck className="w-3 h-3 text-amber-600 shrink-0" />
-                        <span>Pronta entrega na obra</span>
+                      <div className={`mt-1 flex items-center gap-1 text-[10px] font-bold ${isOutOfStock ? 'text-red-600' : 'text-amber-700'}`}>
+                        {isOutOfStock ? (
+                          <>
+                            <BellRing className="w-3 h-3 text-red-600 shrink-0" />
+                            <span>Esgotado temporariamente</span>
+                          </>
+                        ) : (
+                          <>
+                            <Truck className="w-3 h-3 text-amber-600 shrink-0" />
+                            <span>Pronta entrega na obra</span>
+                          </>
+                        )}
                       </div>
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => addToCart(product, 1)}
-                        className="flex-1 py-2 px-3 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors active:scale-[0.98] cursor-pointer"
-                      >
-                        <ShoppingCart className="w-3.5 h-3.5" />
-                        <span>Mover ao Carrinho</span>
-                      </button>
+                      {isOutOfStock ? (
+                        <button
+                          type="button"
+                          onClick={() => setAlertProduct(product)}
+                          className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-colors active:scale-[0.98] cursor-pointer ${
+                            isAlertActive
+                              ? 'bg-amber-50 border border-amber-400 text-amber-900'
+                              : 'bg-slate-950 hover:bg-slate-800 text-amber-400'
+                          }`}
+                        >
+                          {isAlertActive ? (
+                            <>
+                              <CheckCircle2 className="w-3.5 h-3.5 text-amber-600" />
+                              <span>Alerta Ativado</span>
+                            </>
+                          ) : (
+                            <>
+                              <BellRing className="w-3.5 h-3.5" />
+                              <span>Avise-me</span>
+                            </>
+                          )}
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => addToCart(product, 1)}
+                          className="flex-1 py-2 px-3 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors active:scale-[0.98] cursor-pointer"
+                        >
+                          <ShoppingCart className="w-3.5 h-3.5" />
+                          <span>Mover ao Carrinho</span>
+                        </button>
+                      )}
                       <button
                         onClick={() => removeFromWishlist(product.id)}
                         className="p-2 rounded-lg border border-slate-200 hover:border-red-300 hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors cursor-pointer"
@@ -226,6 +276,11 @@ export const WishlistView: React.FC = () => {
           })}
         </div>
       )}
+
+      <StockAlertModal
+        product={alertProduct}
+        onClose={() => setAlertProduct(null)}
+      />
     </div>
   );
 };

@@ -10,7 +10,8 @@ import {
   Truck,
   Check,
   X,
-  ChevronLeft
+  ChevronLeft,
+  Award
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { OptimizedImage } from './OptimizedImage';
@@ -33,6 +34,8 @@ export const CartDrawer: React.FC = () => {
     isLoggedIn,
     setPostLoginRedirect,
     showToast,
+    redeemedCoupons,
+    currentUser,
     t
   } = useApp();
 
@@ -266,6 +269,44 @@ export const CartDrawer: React.FC = () => {
                     </button>
                   </div>
                 )}
+
+                {/* Clickable Loyalty & Available Coupons Strip */}
+                {(redeemedCoupons.length > 0 || (currentUser.coupons && currentUser.coupons.length > 0)) && (
+                  <div className="mt-3 space-y-1.5">
+                    <span className="text-[10px] font-bold text-stone-500 uppercase tracking-wider flex items-center gap-1">
+                      <Award className="w-3 h-3 text-amber-600" />
+                      Seus Cupons & Resgates Fidelidade LM:
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {[
+                        ...redeemedCoupons,
+                        ...(currentUser.coupons || []).filter(
+                          (uc) => !redeemedCoupons.some((rc) => rc.code === uc.code)
+                        ),
+                      ].map((c) => {
+                        const isActive = appliedCoupon === c.code;
+                        return (
+                          <button
+                            key={c.id}
+                            type="button"
+                            onClick={() => {
+                              const res = applyCoupon(c.code);
+                              setCouponFeedback(res.message);
+                            }}
+                            className={`px-2 py-1 rounded-lg border text-[10px] font-mono font-bold transition-colors cursor-pointer ${
+                              isActive
+                                ? 'bg-slate-950 text-amber-400 border-slate-950'
+                                : 'bg-stone-50 hover:bg-amber-50 text-stone-800 border-stone-200 hover:border-amber-300'
+                            }`}
+                            title={c.description}
+                          >
+                            {c.code}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Price Details */}
@@ -286,10 +327,20 @@ export const CartDrawer: React.FC = () => {
                   <span>Frete estimado</span>
                   <span className="font-mono-numbers text-stone-800">
                     {cartDeliveryFee === 0 ? (
-                      <strong className="text-emerald-700 font-bold uppercase text-[11px]">Grátis</strong>
+                      <strong className="text-amber-700 font-bold uppercase text-[11px]">Grátis</strong>
                     ) : (
                       `R$ ${cartDeliveryFee.toFixed(2).replace('.', ',')}`
                     )}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between text-[11px] text-amber-800 bg-amber-50/70 border border-amber-200/80 px-2.5 py-1.5 rounded-lg font-semibold">
+                  <span className="flex items-center gap-1">
+                    <Award className="w-3.5 h-3.5 text-amber-600" />
+                    Fidelidade LM nesta compra:
+                  </span>
+                  <span className="font-mono-numbers font-extrabold">
+                    +{Math.max(10, Math.round(cartTotal / 10))} pts
                   </span>
                 </div>
 

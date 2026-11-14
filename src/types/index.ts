@@ -19,10 +19,42 @@ export interface UserCoupon {
   id: string;
   code: string;
   discount: number;
-  type: 'percent' | 'fixed';
+  type: 'percent' | 'fixed' | 'shipping';
   description: string;
   minOrder: number;
   validUntil: string;
+}
+
+export interface LoyaltyTransaction {
+  id: string;
+  type: 'earn' | 'redeem';
+  source: 'compra' | 'avaliacao' | 'ia' | 'resgate' | 'boas_vindas';
+  points: number;
+  description: string;
+  date: string;
+  couponCode?: string;
+}
+
+export interface LoyaltyRewardOption {
+  id: string;
+  title: string;
+  description: string;
+  pointsCost: number;
+  discountType: 'percent' | 'fixed' | 'shipping';
+  discountValue: number;
+  minOrder: number;
+  codePrefix: string;
+}
+
+export interface StockAlertSubscription {
+  id: string;
+  productId: string;
+  productName: string;
+  email: string;
+  channel: 'push' | 'email' | 'both';
+  createdAt: string;
+  notified: boolean;
+  notifiedAt?: string;
 }
 
 export interface User {
@@ -183,6 +215,8 @@ export interface Order {
   deliveryProofUrl?: string;
   timeline: OrderStatusTimeline[];
   notes?: string;
+  scheduledDate?: string;
+  scheduledShift?: string;
 }
 
 export interface DeliveryZone {

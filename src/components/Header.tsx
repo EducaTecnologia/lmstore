@@ -649,6 +649,13 @@ export const Header: React.FC<{ onOpenMobileMenu?: () => void }> = () => {
                                 if (notif.link === '#rastreio') {
                                   setActiveView('order_tracking');
                                   setShowNotificationPanel(false);
+                                } else if (notif.link && notif.link.startsWith('#produto:')) {
+                                  const pid = notif.link.replace('#produto:', '');
+                                  const prodMatch = products.find((p) => p.id === pid);
+                                  if (prodMatch) {
+                                    openProductDetail(prodMatch);
+                                    setShowNotificationPanel(false);
+                                  }
                                 }
                               }}
                               className={`p-3.5 transition-colors flex items-start gap-3 cursor-pointer hover:bg-amber-50/50 ${

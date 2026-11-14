@@ -18,7 +18,11 @@ import {
   ProductReview,
   ShoppingList,
   ContextChatMessage,
-  GoogleMapsRoute
+  GoogleMapsRoute,
+  UserCoupon,
+  LoyaltyTransaction,
+  LoyaltyRewardOption,
+  StockAlertSubscription
 } from '../types';
 import { Language, TranslationDictionary, translations } from '../data/translations';
 import {
@@ -82,7 +86,13 @@ interface AppContextType {
 
   // Orders
   orders: Order[];
-  createOrder: (orderData: { paymentMethod: 'pix' | 'credit_card' | 'money'; address: Address; notes?: string }) => Order;
+  createOrder: (orderData: {
+    paymentMethod: 'pix' | 'credit_card' | 'money';
+    address: Address;
+    notes?: string;
+    scheduledDate?: string;
+    scheduledShift?: string;
+  }) => Order;
   updateOrderStatus: (orderId: string, status: OrderStatus, courierId?: string) => void;
   cancelOrder: (orderId: string, reason: string) => void;
   activeOrder: Order | null;
@@ -152,6 +162,19 @@ interface AppContextType {
   removeFromWishlist: (productId: string) => void;
   clearWishlist: () => void;
   moveAllWishlistToCart: () => void;
+
+  // Programa de Fidelidade LM
+  loyaltyPoints: number;
+  loyaltyHistory: LoyaltyTransaction[];
+  loyaltyRewardsCatalog: LoyaltyRewardOption[];
+  redeemedCoupons: UserCoupon[];
+  earnLoyaltyPoints: (points: number, source: LoyaltyTransaction['source'], description: string) => void;
+  redeemLoyaltyReward: (rewardId: string) => { success: boolean; coupon?: UserCoupon; message: string };
+
+  // Avise-me quando chegar (Stock Alerts)
+  stockAlerts: StockAlertSubscription[];
+  subscribeStockAlert: (product: Product, email: string, channel?: 'push' | 'email' | 'both') => void;
+  isSubscribedToStockAlert: (productId: string) => boolean;
 
   // Collapsible Admin Sidebar
   adminSidebarCollapsed: boolean;
@@ -247,9 +270,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const t = translations[language] || translations.pt;
   const [products, setProducts] = useState<Product[]>(() => {
     const stored = getStored<Product[]>('products', INITIAL_PRODUCTS);
-    // Keep updated images from mockData
+    let needsOutOfStockSeed = false;
+    try {
+      if (!localStorage.getItem('lmstore_stock_v2_seeded')) {
+        needsOutOfStockSeed = true;
+        localStorage.setItem('lmstore_stock_v2_seeded', 'true');
+      }
+    } catch {
+      // Ignore storage error
+    }
     return stored.map((p) => {
       const init = INITIAL_PRODUCTS.find((ip) => ip.id === p.id);
+      if (needsOutOfStockSeed && (p.id === 'prod-hid-3' || p.id === 'prod-cob-2')) {
+        return { ...p, image: init ? init.image : p.image, stock: 0, lots: [] };
+      }
       return init ? { ...p, image: init.image } : p;
     });
   });
@@ -290,6 +324,73 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [reviews, setReviews] = useState<ProductReview[]>(() => getStored('reviews', INITIAL_REVIEWS));
   const [shoppingLists, setShoppingLists] = useState<ShoppingList[]>(() => getStored('lists', INITIAL_SHOPPING_LISTS));
   const [wishlistIds, setWishlistIds] = useState<string[]>(() => getStored<string[]>('wishlist', []));
+
+  // Loyalty Program ("Programa de Fidelidade LM")
+  const loyaltyRewardsCatalog: LoyaltyRewardOption[] = [
+    {
+      id: 'rew-20',
+      title: 'Cupom R$ 20,00 OFF',
+      description: 'Desconto direto válido em compras acima de R$ 150,00 na LM Store.',
+      pointsCost: 100,
+      discountType: 'fixed',
+      discountValue: 20,
+      minOrder: 150,
+      codePrefix: 'LMFID20',
+    },
+    {
+      id: 'rew-frete',
+      title: 'Frete Grátis Obra Express',
+      description: 'Isenção da taxa de entrega para envio prioritário ou agendado.',
+      pointsCost: 180,
+      discountType: 'shipping',
+      discountValue: 100,
+      minOrder: 80,
+      codePrefix: 'LMFRETE',
+    },
+    {
+      id: 'rew-50',
+      title: 'Cupom R$ 50,00 OFF',
+      description: 'Desconto para materiais estruturais, pisos ou tintas acima de R$ 300,00.',
+      pointsCost: 220,
+      discountType: 'fixed',
+      discountValue: 50,
+      minOrder: 300,
+      codePrefix: 'LMFID50',
+    },
+    {
+      id: 'rew-10pct',
+      title: 'Cupom 10% OFF Total',
+      description: '10% de desconto em todo o carrinho de materiais sem limite de itens.',
+      pointsCost: 300,
+      discountType: 'percent',
+      discountValue: 10,
+      minOrder: 100,
+      codePrefix: 'LMFID10P',
+    },
+  ];
+
+  const [loyaltyPoints, setLoyaltyPoints] = useState<number>(() =>
+    getStored<number>('loyalty_points', INITIAL_USERS[0].kmPoints || 250)
+  );
+  const [loyaltyHistory, setLoyaltyHistory] = useState<LoyaltyTransaction[]>(() =>
+    getStored<LoyaltyTransaction[]>('loyalty_history', [
+      {
+        id: 'loy-init-1',
+        type: 'earn',
+        source: 'boas_vindas',
+        points: 250,
+        description: 'Bônus de cadastro no Programa de Fidelidade LM',
+        date: '14/11/2026',
+      },
+    ])
+  );
+  const [redeemedCoupons, setRedeemedCoupons] = useState<UserCoupon[]>(() =>
+    getStored<UserCoupon[]>('redeemed_coupons', [])
+  );
+  const [stockAlerts, setStockAlerts] = useState<StockAlertSubscription[]>(() =>
+    getStored<StockAlertSubscription[]>('stock_alerts', [])
+  );
+
   const [adminSidebarCollapsed, setAdminSidebarCollapsed] = useState<boolean>(() => getStored('sidebar_collapsed', false));
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'info' | 'warning' } | null>(null);
 
@@ -348,6 +449,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => { setStored('reviews', reviews); }, [reviews]);
   useEffect(() => { setStored('lists', shoppingLists); }, [shoppingLists]);
   useEffect(() => { setStored('wishlist', wishlistIds); }, [wishlistIds]);
+  useEffect(() => { setStored('loyalty_points', loyaltyPoints); }, [loyaltyPoints]);
+  useEffect(() => { setStored('loyalty_history', loyaltyHistory); }, [loyaltyHistory]);
+  useEffect(() => { setStored('redeemed_coupons', redeemedCoupons); }, [redeemedCoupons]);
+  useEffect(() => { setStored('stock_alerts', stockAlerts); }, [stockAlerts]);
   useEffect(() => { setStored('zones', deliveryZones); }, [deliveryZones]);
   useEffect(() => { setStored('banners', banners); }, [banners]);
   useEffect(() => { setStored('transactions', financialTransactions); }, [financialTransactions]);
@@ -573,29 +678,89 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return sum + price * item.quantity;
   }, 0);
 
-  const cartDiscount = appliedCoupon === 'KMFRETEGRATIS'
-    ? 7.90
-    : appliedCoupon === 'BEMVINDO15'
-    ? Math.round(cartSubtotal * 0.15 * 100) / 100
-    : 0;
+  const findActiveCoupon = (code: string | null): UserCoupon | undefined => {
+    if (!code) return undefined;
+    const clean = code.trim().toUpperCase();
+    const allAvailable: UserCoupon[] = [
+      ...redeemedCoupons,
+      ...(currentUser.coupons || []),
+      {
+        id: 'sys-bemvindo',
+        code: 'BEMVINDO15',
+        discount: 15,
+        type: 'percent',
+        description: '15% OFF boas-vindas',
+        minOrder: 0,
+        validUntil: '31/12/2026',
+      },
+      {
+        id: 'sys-frete',
+        code: 'KMFRETEGRATIS',
+        discount: 100,
+        type: 'shipping',
+        description: 'Frete grátis',
+        minOrder: 0,
+        validUntil: '31/12/2026',
+      },
+      {
+        id: 'sys-lmobra',
+        code: 'LMOBRA10',
+        discount: 10,
+        type: 'percent',
+        description: '10% OFF cimento e argamassa',
+        minOrder: 150,
+        validUntil: '31/12/2026',
+      },
+      {
+        id: 'sys-provip',
+        code: 'PROVIP50',
+        discount: 50,
+        type: 'fixed',
+        description: 'R$ 50 OFF Clube Pro',
+        minOrder: 400,
+        validUntil: '31/12/2026',
+      },
+    ];
+    return allAvailable.find((c) => c.code.toUpperCase() === clean);
+  };
 
-  const cartDeliveryFee = appliedCoupon === 'KMFRETEGRATIS' || cartSubtotal >= 120 ? 0 : 7.90;
+  const activeCouponObj = findActiveCoupon(appliedCoupon);
+
+  const baseShippingFee = cartSubtotal >= 120 ? 0 : 7.90;
+  const isFreeShippingCoupon =
+    activeCouponObj?.type === 'shipping' ||
+    appliedCoupon === 'KMFRETEGRATIS' ||
+    appliedCoupon === 'FRETECAMPANHA';
+
+  const cartDeliveryFee = isFreeShippingCoupon ? 0 : baseShippingFee;
+
+  const cartDiscount = (() => {
+    if (!activeCouponObj) return 0;
+    if (activeCouponObj.type === 'shipping') return 0;
+    if (activeCouponObj.type === 'percent') {
+      return Math.round(cartSubtotal * (activeCouponObj.discount / 100) * 100) / 100;
+    }
+    return Math.min(cartSubtotal, activeCouponObj.discount);
+  })();
+
   const cartTotal = Math.max(0, cartSubtotal - cartDiscount + cartDeliveryFee);
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   const applyCoupon = (code: string) => {
     const clean = code.trim().toUpperCase();
-    if (clean === 'BEMVINDO15') {
-      setAppliedCoupon('BEMVINDO15');
-      showToast('Cupom de 15% OFF aplicado com sucesso!');
-      return { success: true, message: 'Cupom de 15% aplicado!' };
+    const matched = findActiveCoupon(clean);
+    if (!matched) {
+      return { success: false, message: 'Cupom inválido ou expirado.' };
     }
-    if (clean === 'KMFRETEGRATIS') {
-      setAppliedCoupon('KMFRETEGRATIS');
-      showToast('Frete Grátis aplicado ao seu pedido!');
-      return { success: true, message: 'Frete Grátis ativado!' };
+    if (matched.minOrder > 0 && cartSubtotal < matched.minOrder) {
+      return {
+        success: false,
+        message: `Pedido mínimo de R$ ${matched.minOrder.toFixed(2).replace('.', ',')} para ativar ${clean}.`,
+      };
     }
-    return { success: false, message: 'Cupom inválido ou expirado.' };
+    setAppliedCoupon(matched.code);
+    showToast(`Cupom ${matched.code} aplicado com sucesso!`, 'success');
+    return { success: true, message: `Cupom ${matched.code} ativado!` };
   };
 
   const removeCoupon = () => {
@@ -603,17 +768,195 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showToast('Cupom removido');
   };
 
+  // Loyalty Points Helpers
+  const earnLoyaltyPoints = (
+    points: number,
+    source: LoyaltyTransaction['source'],
+    description: string
+  ) => {
+    if (points <= 0) return;
+    setLoyaltyPoints((prev) => {
+      const next = prev + points;
+      setCurrentUser((u) => ({ ...u, kmPoints: next }));
+      return next;
+    });
+    const entry: LoyaltyTransaction = {
+      id: `loy-${Date.now()}-${Math.floor(Math.random() * 100)}`,
+      type: 'earn',
+      source,
+      points,
+      description,
+      date: new Date().toLocaleDateString('pt-BR'),
+    };
+    setLoyaltyHistory((prev) => [entry, ...prev]);
+  };
+
+  const redeemLoyaltyReward = (rewardId: string) => {
+    const reward = loyaltyRewardsCatalog.find((r) => r.id === rewardId);
+    if (!reward) {
+      return { success: false, message: 'Recompensa não encontrada.' };
+    }
+    if (loyaltyPoints < reward.pointsCost) {
+      return {
+        success: false,
+        message: `Faltam ${reward.pointsCost - loyaltyPoints} pontos para resgatar este cupom.`,
+      };
+    }
+
+    const generatedCode = `${reward.codePrefix}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const newCoupon: UserCoupon = {
+      id: `coup-fid-${Date.now()}`,
+      code: generatedCode,
+      discount: reward.discountValue,
+      type: reward.discountType,
+      description: `${reward.title} (Fidelidade LM)`,
+      minOrder: reward.minOrder,
+      validUntil: '31/12/2026',
+    };
+
+    setLoyaltyPoints((prev) => {
+      const next = Math.max(0, prev - reward.pointsCost);
+      setCurrentUser((u) => ({ ...u, kmPoints: next }));
+      return next;
+    });
+
+    const redeemTx: LoyaltyTransaction = {
+      id: `loy-red-${Date.now()}`,
+      type: 'redeem',
+      source: 'resgate',
+      points: -reward.pointsCost,
+      description: `Resgate: ${reward.title}`,
+      date: new Date().toLocaleDateString('pt-BR'),
+      couponCode: generatedCode,
+    };
+    setLoyaltyHistory((prev) => [redeemTx, ...prev]);
+    setRedeemedCoupons((prev) => [newCoupon, ...prev]);
+    setCurrentUser((u) => ({
+      ...u,
+      coupons: [newCoupon, ...(u.coupons || [])],
+    }));
+
+    showToast(`Cupom ${generatedCode} resgatado no Programa de Fidelidade LM!`, 'success');
+    return {
+      success: true,
+      coupon: newCoupon,
+      message: `Cupom ${generatedCode} adicionado à sua carteira!`,
+    };
+  };
+
+  // Back-in-Stock Alert Helpers ("Avise-me quando chegar")
+  const dispatchRestockAlerts = (product: Product, replenishedQty: number) => {
+    const pending = stockAlerts.filter((a) => a.productId === product.id && !a.notified);
+    if (pending.length === 0) return;
+
+    const nowStr = new Date().toLocaleString('pt-BR');
+    const recipientEmails = Array.from(new Set(pending.map((p) => p.email))).join(', ');
+
+    setStockAlerts((prev) =>
+      prev.map((a) =>
+        a.productId === product.id && !a.notified
+          ? { ...a, notified: true, notifiedAt: nowStr }
+          : a
+      )
+    );
+
+    const restockNotif: PushNotification = {
+      id: `notif-stock-${Date.now()}`,
+      title: `Chegou! ${product.name}`,
+      message: `Estoque reposto (+${replenishedQty} ${product.unit}). Alerta Push e e-mail automático enviados para: ${recipientEmails}.`,
+      type: 'stock',
+      timestamp: 'Agora mesmo',
+      read: false,
+      link: `#produto:${product.id}`,
+    };
+    setNotifications((prev) => [restockNotif, ...prev]);
+
+    if (typeof window !== 'undefined' && 'Notification' in window && window.Notification.permission === 'granted') {
+      try {
+        new window.Notification(`LM Store · Produto disponível!`, {
+          body: `${product.name} voltou ao estoque (${replenishedQty} ${product.unit}). Garanta o seu!`,
+        });
+      } catch {
+        // Ignore browser notification restrictions
+      }
+    }
+
+    showToast(
+      `Estoque reposto! Notificação Push e e-mail enviados para ${pending.length} aviso(s) de "${product.name}".`,
+      'success'
+    );
+  };
+
+  const subscribeStockAlert = (
+    product: Product,
+    email: string,
+    channel: 'push' | 'email' | 'both' = 'both'
+  ) => {
+    const cleanEmail = (email || currentUser.email || 'cliente@lmstore.com.br').trim();
+    if (
+      (channel === 'push' || channel === 'both') &&
+      typeof window !== 'undefined' &&
+      'Notification' in window &&
+      window.Notification.permission === 'default'
+    ) {
+      window.Notification.requestPermission().catch(() => {});
+    }
+
+    setStockAlerts((prev) => {
+      const existingIdx = prev.findIndex(
+        (a) => a.productId === product.id && !a.notified && a.email.toLowerCase() === cleanEmail.toLowerCase()
+      );
+      if (existingIdx >= 0) {
+        const updated = [...prev];
+        updated[existingIdx] = { ...updated[existingIdx], channel };
+        return updated;
+      }
+      const newAlert: StockAlertSubscription = {
+        id: `alert-${Date.now()}`,
+        productId: product.id,
+        productName: product.name,
+        email: cleanEmail,
+        channel,
+        createdAt: new Date().toLocaleString('pt-BR'),
+        notified: false,
+      };
+      return [newAlert, ...prev];
+    });
+
+    const channelLabel =
+      channel === 'both' ? 'Push e E-mail' : channel === 'push' ? 'Push' : 'E-mail';
+
+    const confirmNotif: PushNotification = {
+      id: `notif-alert-${Date.now()}`,
+      title: `Aviso ativado: ${product.name}`,
+      message: `Você receberá alerta automático via ${channelLabel} (${cleanEmail}) assim que este material retornar ao CD.`,
+      type: 'stock',
+      timestamp: 'Agora mesmo',
+      read: false,
+    };
+    setNotifications((prev) => [confirmNotif, ...prev]);
+
+    showToast(`Alerta ativado! Avisaremos via ${channelLabel} quando "${product.name}" chegar.`, 'success');
+  };
+
+  const isSubscribedToStockAlert = (productId: string) =>
+    stockAlerts.some((a) => a.productId === productId && !a.notified);
+
   // Orders creation
   const createOrder = ({
     paymentMethod,
     address,
     notes,
+    scheduledDate,
+    scheduledShift,
   }: {
     paymentMethod: 'pix' | 'credit_card' | 'money';
     address: Address;
     notes?: string;
+    scheduledDate?: string;
+    scheduledShift?: string;
   }) => {
-    const newCode = `KM-${Math.floor(1000 + Math.random() * 9000)}`;
+    const newCode = `LM-${Math.floor(1000 + Math.random() * 9000)}`;
     const newOrderId = `ord-${Date.now()}`;
 
     // FEFO Stock deduction
@@ -670,12 +1013,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       notes,
+      scheduledDate,
+      scheduledShift,
       timeline: [
         {
           status: 'novo',
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           label: 'Pedido Realizado',
-          description: 'Seu pedido foi registrado no sistema LM Store.',
+          description: scheduledDate && scheduledShift
+            ? `Pedido registrado · Entrega agendada para ${scheduledDate} (${scheduledShift}).`
+            : 'Seu pedido foi registrado no sistema LM Store.',
         },
         {
           status: 'pago',
@@ -688,6 +1035,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     setOrders(prev => [newOrder, ...prev]);
     setActiveOrder(newOrder);
+
+    const earnedPoints = Math.max(10, Math.round(cartTotal / 10));
+    earnLoyaltyPoints(earnedPoints, 'compra', `Compra Pedido #${newCode} (R$ ${cartTotal.toFixed(2).replace('.', ',')})`);
 
     const newTx: FinancialTransaction = {
       id: `tx-${Date.now()}`,
@@ -703,10 +1053,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
     setFinancialTransactions(prev => [newTx, ...prev]);
 
+    const scheduleText = scheduledDate && scheduledShift
+      ? ` Entrega programada: ${scheduledDate} · ${scheduledShift}.`
+      : '';
+
     const newNotif: PushNotification = {
       id: `notif-${Date.now()}`,
-      title: `Pedido ${newCode} Aprovado!`,
-      message: `Seus produtos frescos estão sendo preparados com controle FEFO. Tempo estimado: 35 min.`,
+      title: `Pedido ${newCode} Aprovado! (+${earnedPoints} pts)`,
+      message: `Materiais em preparação no CD LM Store.${scheduleText} Você acumulou +${earnedPoints} pts no Programa de Fidelidade LM.`,
       type: 'order',
       timestamp: 'Agora mesmo',
       read: false,
@@ -716,7 +1070,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     clearCart();
     setActiveView('order_tracking');
-    showToast(`Pedido ${newCode} confirmado com sucesso!`, 'success');
+    showToast(`Pedido ${newCode} confirmado! +${earnedPoints} pontos acumulados na Fidelidade LM.`, 'success');
     return newOrder;
   };
 
@@ -769,8 +1123,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Products CRUD
   const updateProduct = (updated: Product) => {
+    const previous = products.find((p) => p.id === updated.id);
     setProducts(prev => prev.map(p => (p.id === updated.id ? updated : p)));
     showToast(`Produto "${updated.name}" atualizado.`);
+    if (previous && previous.stock <= 0 && updated.stock > 0) {
+      dispatchRestockAlerts(updated, updated.stock);
+    }
   };
 
   const addProduct = (newProd: Omit<Product, 'id'>) => {
@@ -794,6 +1152,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       receivedAt: new Date().toISOString().slice(0, 10),
     };
 
+    const targetProduct = products.find((p) => p.id === productId);
+    const wasOutOfStock = Boolean(targetProduct && targetProduct.stock <= 0);
+
     setProducts(prev =>
       prev.map(p => {
         if (p.id !== productId) return p;
@@ -808,6 +1169,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     );
 
     showToast(`Lote ${lotData.lotNumber} recebido (+${lotData.quantity} unidades)!`);
+    if (wasOutOfStock && targetProduct && lotData.quantity > 0) {
+      dispatchRestockAlerts(targetProduct, lotData.quantity);
+    }
   };
 
   const deleteInventoryLot = (productId: string, lotId: string) => {
@@ -959,7 +1323,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return newProds;
     });
 
-    showToast('Avaliação publicada com sucesso! Obrigado pelo feedback sobre o material.');
+    const prodObj = products.find((p) => p.id === productId);
+    earnLoyaltyPoints(
+      35,
+      'avaliacao',
+      `Avaliação publicada em "${prodObj?.name || 'Material de Construção'}"`
+    );
+
+    showToast('Avaliação publicada! Você ganhou +35 pontos no Programa de Fidelidade LM.', 'success');
   };
 
   const getProductReviews = (productId: string) => {
@@ -1065,15 +1436,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const moveAllWishlistToCart = () => {
     let addedCount = 0;
+    let skippedOutOfStock = 0;
     wishlistIds.forEach((id) => {
       const prod = products.find((p) => p.id === id);
       if (prod) {
-        addToCart(prod, 1);
-        addedCount++;
+        if (prod.stock > 0) {
+          addToCart(prod, 1);
+          addedCount++;
+        } else {
+          skippedOutOfStock++;
+        }
       }
     });
     if (addedCount > 0) {
-      showToast(`${addedCount} produto(s) da Lista de Desejos adicionados ao carrinho!`, 'success');
+      showToast(
+        skippedOutOfStock > 0
+          ? `${addedCount} produto(s) disponíveis adicionados (${skippedOutOfStock} esgotado(s) mantido(s)).`
+          : `${addedCount} produto(s) da Lista de Desejos adicionados ao carrinho!`,
+        'success'
+      );
+    } else if (skippedOutOfStock > 0) {
+      showToast('Os itens salvos estão temporariamente esgotados. Ative o "Avise-me quando chegar"!', 'warning');
     }
   };
 
@@ -1183,6 +1566,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       };
 
       setBotMessages((prev) => [...prev, replyMsg]);
+      earnLoyaltyPoints(15, 'ia', 'Consultoria / Orçamento no Assistente Técnico IA');
+      showToast('+15 pontos acumulados pela interação com a IA LM Store!', 'info');
     } catch (err: any) {
       const errMsg: ContextChatMessage = {
         id: `bot-${Date.now() + 1}`,
@@ -1338,6 +1723,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         removeFromWishlist,
         clearWishlist,
         moveAllWishlistToCart,
+        loyaltyPoints,
+        loyaltyHistory,
+        loyaltyRewardsCatalog,
+        redeemedCoupons,
+        earnLoyaltyPoints,
+        redeemLoyaltyReward,
+        stockAlerts,
+        subscribeStockAlert,
+        isSubscribedToStockAlert,
         adminSidebarCollapsed,
         setAdminSidebarCollapsed,
         toggleAdminSidebar,
