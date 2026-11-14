@@ -155,7 +155,7 @@ export const CATEGORIES: Category[] = [
     slug: 'estrutura-alvenaria',
     description: 'Cimento CP-II, CP-III, CP-V ARI, argamassas AC-I a AC-III, blocos de concreto e cerâmicos, vergalhões CA-50, areia, brita e escoras.',
     iconName: 'Building2',
-    image: 'https://images.unsplash.com/photo-1541888946425-d0fbb186a5b3?w=600&auto=format&fit=crop&q=80',
+    image: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600&auto=format&fit=crop&q=80',
     itemCount: 86,
     featured: true,
     subcategories: [

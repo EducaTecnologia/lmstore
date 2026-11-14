@@ -145,6 +145,14 @@ interface AppContextType {
   removeItemFromShoppingList: (listId: string, productId: string) => void;
   addListToCart: (listId: string) => void;
 
+  // Wishlist ("Lista de Desejos")
+  wishlistIds: string[];
+  isInWishlist: (productId: string) => boolean;
+  toggleWishlist: (product: Product) => void;
+  removeFromWishlist: (productId: string) => void;
+  clearWishlist: () => void;
+  moveAllWishlistToCart: () => void;
+
   // Collapsible Admin Sidebar
   adminSidebarCollapsed: boolean;
   setAdminSidebarCollapsed: (collapsed: boolean) => void;
@@ -153,8 +161,22 @@ interface AppContextType {
   // Context-Aware Chatbot
   botOpen: boolean;
   setBotOpen: (open: boolean) => void;
+  botLoading: boolean;
   botMessages: ContextChatMessage[];
-  sendBotMessage: (text: string, forceThinking?: boolean) => void;
+  sendBotMessage: (
+    text: string,
+    options?: boolean | {
+      forceThinking?: boolean;
+      images?: { dataUrl: string; label?: string }[];
+      measurements?: {
+        width?: number;
+        length?: number;
+        height?: number;
+        roomType?: string;
+        colorName?: string;
+      };
+    }
+  ) => Promise<void>;
 
   // Google Maps Route & Places Agent
   mapsModalOpen: boolean;
@@ -267,22 +289,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [notifications, setNotifications] = useState<PushNotification[]>(() => getStored('notifications', INITIAL_NOTIFICATIONS));
   const [reviews, setReviews] = useState<ProductReview[]>(() => getStored('reviews', INITIAL_REVIEWS));
   const [shoppingLists, setShoppingLists] = useState<ShoppingList[]>(() => getStored('lists', INITIAL_SHOPPING_LISTS));
+  const [wishlistIds, setWishlistIds] = useState<string[]>(() => getStored<string[]>('wishlist', []));
   const [adminSidebarCollapsed, setAdminSidebarCollapsed] = useState<boolean>(() => getStored('sidebar_collapsed', false));
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'info' | 'warning' } | null>(null);
 
   // Bot states
   const [botOpen, setBotOpen] = useState(false);
+  const [botLoading, setBotLoading] = useState(false);
   const [botMessages, setBotMessages] = useState<ContextChatMessage[]>([
     {
       id: 'msg-1',
       role: 'assistant',
-      content: 'Olá! Sou o Assistente Técnico LM Store. Posso ajudar você a orçar e calcular materiais para sua obra (cimento, laje, porcelanato, tintas Suvinil/Coral, condutores elétricos SIL) e acompanhar entregas no canteiro.',
+      content: 'Olá! Sou o Assistente Técnico LM Store com Gemini IA. Anexe fotos de materiais para gerar sua lista com promoções, informe medidas ou foto de sala/garagem + piso para simular e calcular cimento/argamassa, ou envie foto de uma parede + cor (nome ou imagem) para orçar tinta, demãos, secagem e ver o resultado!',
       timestamp: 'Agora',
       suggestedActions: [
+        { label: 'Orçar lista por foto', action: 'photo_materials' },
+        { label: 'Calcular sala/garagem + piso', action: 'room_floor' },
+        { label: 'Simular pintura de parede', action: 'wall_paint' },
         { label: 'Onde está meu pedido?', action: 'track_order' },
-        { label: 'Cálculo para lajes e concreto', action: 'calc_concrete' },
-        { label: 'Lista de materiais da obra', action: 'create_list' },
-        { label: 'Entrega com munck no mapa', action: 'calc_route' },
       ],
     },
   ]);
@@ -323,10 +347,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => { setStored('orders', orders); }, [orders]);
   useEffect(() => { setStored('reviews', reviews); }, [reviews]);
   useEffect(() => { setStored('lists', shoppingLists); }, [shoppingLists]);
+  useEffect(() => { setStored('wishlist', wishlistIds); }, [wishlistIds]);
   useEffect(() => { setStored('zones', deliveryZones); }, [deliveryZones]);
   useEffect(() => { setStored('banners', banners); }, [banners]);
   useEffect(() => { setStored('transactions', financialTransactions); }, [financialTransactions]);
   useEffect(() => { setStored('sidebar_collapsed', adminSidebarCollapsed); }, [adminSidebarCollapsed]);
+
+  // Open product automatically when arriving via shared link (?produto=slug)
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const productParam = params.get('produto') || params.get('p');
+      if (productParam) {
+        const matched = products.find(
+          (p) => p.slug === productParam || p.id === productParam
+        );
+        if (matched) {
+          setSelectedProduct(matched);
+        }
+      }
+    } catch {
+      // Ignore URL parse error
+    }
+  }, []);
 
   const showToast = (text: string, type: 'success' | 'info' | 'warning' = 'success') => {
     setToastMessage({ text, type });
@@ -995,62 +1038,163 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showToast(`Todos os itens da lista "${list.title}" foram adicionados à cesta!`);
   };
 
-  // Context Chatbot
-  const sendBotMessage = (text: string, forceThinking = false) => {
-    if (!text.trim()) return;
+  // Wishlist Handlers
+  const isInWishlist = (productId: string) => wishlistIds.includes(productId);
+
+  const toggleWishlist = (product: Product) => {
+    setWishlistIds((prev) => {
+      const exists = prev.includes(product.id);
+      if (exists) {
+        showToast(`"${product.name}" removido da sua Lista de Desejos.`, 'info');
+        return prev.filter((id) => id !== product.id);
+      }
+      showToast(`"${product.name}" salvo na sua Lista de Desejos!`, 'success');
+      return [product.id, ...prev];
+    });
+  };
+
+  const removeFromWishlist = (productId: string) => {
+    setWishlistIds((prev) => prev.filter((id) => id !== productId));
+    showToast('Produto removido da Lista de Desejos.', 'info');
+  };
+
+  const clearWishlist = () => {
+    setWishlistIds([]);
+    showToast('Lista de Desejos esvaziada.', 'info');
+  };
+
+  const moveAllWishlistToCart = () => {
+    let addedCount = 0;
+    wishlistIds.forEach((id) => {
+      const prod = products.find((p) => p.id === id);
+      if (prod) {
+        addToCart(prod, 1);
+        addedCount++;
+      }
+    });
+    if (addedCount > 0) {
+      showToast(`${addedCount} produto(s) da Lista de Desejos adicionados ao carrinho!`, 'success');
+    }
+  };
+
+  // Context Chatbot (Integrated with Gemini API via /api/ai/assistant-chat)
+  const sendBotMessage = async (
+    text: string,
+    options?:
+      | boolean
+      | {
+          forceThinking?: boolean;
+          images?: { dataUrl: string; label?: string }[];
+          measurements?: {
+            width?: number;
+            length?: number;
+            height?: number;
+            roomType?: string;
+            colorName?: string;
+          };
+        }
+  ) => {
+    const opts = typeof options === 'boolean' ? { forceThinking: options } : options || {};
+    const images = opts.images || [];
+    const measurements = opts.measurements;
+    const forceThinking = Boolean(opts.forceThinking);
+
+    if (!text.trim() && images.length === 0) return;
 
     const userMsg: ContextChatMessage = {
       id: `bot-${Date.now()}`,
       role: 'user',
-      content: text,
+      content: text.trim() || 'Análise dos anexos enviados.',
+      attachments: images.length > 0 ? images : undefined,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
 
-    setBotMessages(prev => [...prev, userMsg]);
+    const currentHistory = [...botMessages, userMsg];
+    setBotMessages(currentHistory);
+    setBotLoading(true);
 
-    const lower = text.toLowerCase();
-    const isComplex = forceThinking || lower.includes('concreto') || lower.includes('laje') || lower.includes('orçamento') || lower.includes('porcelanato') || lower.includes('traço') || lower.includes('fio') || lower.includes('tinta') || lower.includes('compar');
+    try {
+      const catalogSummary = products.map((p) => ({
+        id: p.id,
+        name: p.name,
+        slug: p.slug,
+        categoryName: p.categoryName,
+        subcategory: p.subcategory,
+        brand: p.brand,
+        unit: p.unit,
+        weightValue: p.weightValue,
+        price: p.price,
+        salePrice: p.salePrice,
+        isPromo: Boolean(p.isPromo || (p.salePrice && p.salePrice < p.price)),
+      }));
 
-    setTimeout(() => {
-      let botReply = '';
-      let thinkingSteps: string[] | undefined = undefined;
+      const latestOrder = orders[0];
+      const orderContext = {
+        cartCount: cart.length,
+        latestOrderCode: latestOrder?.code || 'LM-2026',
+        latestOrderStatus: latestOrder?.status || 'em_entrega',
+        customerCity: currentAddress?.city || 'São Paulo',
+      };
 
-      if (isComplex) {
-        thinkingSteps = [
-          'Identificando parâmetros da obra (metragem quadrada, espessura e especificações normativas ABNT NBR).',
-          'Consultando base de materiais originais (Votorantim, Tigre, Bosch, Suvinil, Portobello, SIL).',
-          'Calculando margem de quebra/perda técnica recomendada para canteiro (10% a 15%).',
-          'Verificando disponibilidade em estoque no Centro Logístico LM Store e regras de frete munck.',
-          'Consolidando lista técnica de insumos com quantidades exatas por embalagem comercial (sacos, m², barras).'
-        ];
-      }
+      const res = await fetch('/api/ai/assistant-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: text.trim(),
+          images,
+          measurements,
+          thinkingMode: forceThinking,
+          catalogSummary,
+          orderContext,
+          history: currentHistory.slice(-6).map((m) => ({
+            role: m.role === 'user' ? 'user' : 'assistant',
+            content: m.content,
+          })),
+        }),
+      });
 
-      if (lower.includes('pedido') || lower.includes('rastre') || lower.includes('onde')) {
-        const latest = orders[0];
-        botReply = `Seu pedido de materiais mais recente é o **#${latest?.code || 'LM-2026'}** no status **${latest?.status?.toUpperCase() || 'EM ROTA DE ENTREGA'}** para entrega no canteiro em **${latest?.address?.neighborhood || 'seu endereço'}**. Veículo com munck a caminho! Você pode acompanhar o mapa da entrega em tempo real.`;
-      } else if (lower.includes('concreto') || lower.includes('cimento') || lower.includes('laje')) {
-        botReply = `Para concretagem estrutural (traço 1:2:3 - cimento, areia e brita), recomendamos o **Cimento Poty/Votoran CP-II-F 32 de 50kg** com **Aço CA-50 Gerdau**. Para cada 1 m³ de concreto, utilizam-se em média 7 a 8 sacos de cimento de 50kg, 0,6m³ de areia média e 0,8m³ de brita 1.`;
-      } else if (lower.includes('frete') || lower.includes('munck') || lower.includes('mapa') || lower.includes('distancia') || lower.includes('entrega')) {
-        botReply = `O Centro Logístico da LM Store opera com frota própria e caminhões munck para descarregamento seguro de paletes de cimento, tijolos, telhas e ferragens pesadas diretamente no canteiro de obras. Oferecemos taxa calculada pela distância e opções de retirada expressa no balcão em até 2 horas.`;
-      } else if (lower.includes('lista') || lower.includes('materiais') || lower.includes('obra')) {
-        botReply = `Você possui **${shoppingLists.length} listas da obra salvas** (como "${shoppingLists[0]?.title || 'Fundação e Alvenaria'}"). Você pode adicionar todos os insumos de uma etapa da obra diretamente ao carrinho com 1 clique!`;
-      } else if (lower.includes('piso') || lower.includes('porcelanato')) {
-        botReply = `Para assentamento de porcelanatos como **Portobello e Eliane**, use sempre **Argamassa AC-III Quartzolit** e adicione 10% de margem de corte/perda sobre a área útil do cômodo. Não se esqueça dos espaçadores e niveladores Cortag para junta perfeita!`;
-      } else {
-        botReply = `Entendi perfeitamente! Como seu assistente técnico LM Store, posso ajudar a calcular quantidades de cimento e porcelanato, verificar normas técnicas ABNT, orçar cabos elétricos ou rastrear seu caminhão de entrega. Como posso ajudar na sua obra hoje?`;
+      const data = await res.json();
+
+      if (!res.ok || data.error) {
+        const errMsg: ContextChatMessage = {
+          id: `bot-${Date.now() + 1}`,
+          role: 'assistant',
+          content: data.error || 'Não foi possível conectar ao Assistente Gemini neste momento.',
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          modelUsed: 'Gemini API',
+        };
+        setBotMessages((prev) => [...prev, errMsg]);
+        showToast(data.error || 'Erro ao consultar Gemini AI.', 'warning');
+        return;
       }
 
       const replyMsg: ContextChatMessage = {
         id: `bot-${Date.now() + 1}`,
         role: 'assistant',
-        content: botReply,
+        content: data.reply,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        thinkingProcess: thinkingSteps,
-        modelUsed: isComplex ? 'gemini-3.1-pro-preview (ThinkingLevel.HIGH)' : 'gemini-3.8-flash',
+        thinkingProcess: data.thinkingProcess,
+        materialsList: data.materialsList,
+        paintEstimate: data.paintEstimate,
+        roomEstimate: data.roomEstimate,
+        generatedImage: data.generatedImage,
+        generatedImageWarning: data.generatedImageWarning,
+        modelUsed: data.modelUsed || 'gemini-4-hydrogen',
       };
 
-      setBotMessages(prev => [...prev, replyMsg]);
-    }, isComplex ? 1000 : 600);
+      setBotMessages((prev) => [...prev, replyMsg]);
+    } catch (err: any) {
+      const errMsg: ContextChatMessage = {
+        id: `bot-${Date.now() + 1}`,
+        role: 'assistant',
+        content: 'Falha de comunicação com o servidor do Assistente Gemini. Verifique sua conexão e tente novamente.',
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      };
+      setBotMessages((prev) => [...prev, errMsg]);
+      showToast('Erro de rede ao consultar Gemini.', 'warning');
+    } finally {
+      setBotLoading(false);
+    }
   };
 
   // Google Maps calculate route
@@ -1075,10 +1219,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const openProductDetail = (product: Product) => {
     setSelectedProduct(product);
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.set('produto', product.slug);
+      window.history.replaceState({}, '', url.toString());
+    } catch {
+      // Ignore history API error
+    }
   };
 
   const closeProductDetail = () => {
     setSelectedProduct(null);
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('produto');
+      window.history.replaceState({}, '', url.toString());
+    } catch {
+      // Ignore history API error
+    }
   };
 
   const openInstitutional = (slug: string) => {
@@ -1174,11 +1332,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addItemToShoppingList,
         removeItemFromShoppingList,
         addListToCart,
+        wishlistIds,
+        isInWishlist,
+        toggleWishlist,
+        removeFromWishlist,
+        clearWishlist,
+        moveAllWishlistToCart,
         adminSidebarCollapsed,
         setAdminSidebarCollapsed,
         toggleAdminSidebar,
         botOpen,
         setBotOpen,
+        botLoading,
         botMessages,
         sendBotMessage,
         mapsModalOpen,

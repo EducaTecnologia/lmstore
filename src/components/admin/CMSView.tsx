@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { Banner } from '../../types';
+import { OptimizedImage } from '../OptimizedImage';
 
 export const CMSView: React.FC = () => {
   const { banners, updateBanner, showToast } = useApp();
@@ -47,14 +48,14 @@ export const CMSView: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-stone-200 shadow-xs">
         <div>
-          <span className="text-xs font-semibold text-emerald-800 uppercase tracking-wider">
+          <span className="text-xs font-semibold text-amber-700 uppercase tracking-wider">
             Gestão de Conteúdo (CMS)
           </span>
-          <h1 className="font-display font-extrabold text-2xl text-stone-900 mt-0.5">
-            Banners & Seções da Home
+          <h1 className="font-display font-extrabold text-2xl text-slate-900 mt-0.5">
+            Banners & Vitrine da Home
           </h1>
-          <p className="text-xs text-stone-500 mt-0.5">
-            Configure campanhas da safra, cupons de boas-vindas e banners rotativos.
+          <p className="text-xs text-slate-500 mt-0.5">
+            Configure campanhas de obra, promoções de materiais e banners rotativos da LM Store.
           </p>
         </div>
       </div>
@@ -67,11 +68,14 @@ export const CMSView: React.FC = () => {
             className="bg-white rounded-2xl border border-stone-200 overflow-hidden shadow-xs flex flex-col justify-between"
           >
             <div className="relative aspect-[16/9] bg-stone-100">
-              <img
+              <OptimizedImage
                 src={banner.image}
                 alt={banner.title}
-                referrerPolicy="no-referrer"
-                className="w-full h-full object-cover"
+                width={640}
+                height={360}
+                quality={75}
+                categoryHint="banner"
+                className="w-full h-full"
               />
               <div className="absolute top-2.5 left-2.5 bg-black/60 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-0.5 rounded">
                 Ordem: {banner.order}
@@ -80,7 +84,7 @@ export const CMSView: React.FC = () => {
 
             <div className="p-4 space-y-2 text-xs">
               {banner.badge && (
-                <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded">
+                <span className="text-[10px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded">
                   {banner.badge}
                 </span>
               )}
@@ -173,7 +177,7 @@ export const CMSView: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl text-xs"
+                  className="flex-1 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold rounded-lg text-xs cursor-pointer"
                 >
                   Salvar Alterações
                 </button>

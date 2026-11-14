@@ -12,8 +12,7 @@ import {
   FileText,
   AlertTriangle,
   X,
-  TrendingUp,
-  Leaf
+  TrendingUp
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { Order } from '../../types';
@@ -98,22 +97,22 @@ export const CourierPanelView: React.FC = () => {
   return (
     <div className="max-w-xl mx-auto space-y-5">
       {/* Courier Top Status Card */}
-      <div className="bg-emerald-950 text-white p-5 rounded-2xl shadow-md space-y-4">
+      <div className="bg-slate-900 text-white p-5 rounded-xl border border-slate-800 border-t-4 border-t-amber-500 shadow-sm space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-emerald-800 text-emerald-200 flex items-center justify-center font-bold text-sm">
+            <div className="w-10 h-10 rounded-lg bg-amber-500 text-slate-950 flex items-center justify-center font-extrabold text-sm">
               TS
             </div>
             <div>
               <h2 className="font-display font-bold text-base">Tiago Santos</h2>
-              <p className="text-xs text-emerald-300">Honda CG Cargo · Placa BRA-8E92</p>
+              <p className="text-xs text-amber-400">Caminhão Toco / Munck · Placa BRA-8E92</p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
             <button
               onClick={handleExportCourierPdf}
-              className="p-2 rounded-full bg-emerald-900/80 hover:bg-emerald-800 text-emerald-300 hover:text-white transition-colors cursor-pointer"
+              className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-400 hover:text-amber-300 transition-colors cursor-pointer"
               title="Exportar Extrato PDF"
             >
               <FileText className="w-4 h-4" />
@@ -124,10 +123,10 @@ export const CourierPanelView: React.FC = () => {
                 setOnline(!online);
                 showToast(online ? 'Você ficou Offline' : 'Você está Online para novas entregas!');
               }}
-              className={`px-3 py-1.5 rounded-full text-xs font-bold transition-colors cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
                 online
-                  ? 'bg-emerald-500 text-emerald-950 shadow-sm'
-                  : 'bg-stone-700 text-stone-300'
+                  ? 'bg-amber-500 text-slate-950 shadow-sm'
+                  : 'bg-slate-700 text-slate-300'
               }`}
             >
               {online ? 'Online' : 'Pausado'}
@@ -136,15 +135,15 @@ export const CourierPanelView: React.FC = () => {
         </div>
 
         {/* Daily Earnings & Goal */}
-        <div className="pt-2 border-t border-emerald-800/60 grid grid-cols-2 gap-3 text-center">
-          <div className="bg-emerald-900/60 p-3 rounded-xl">
-            <span className="text-[11px] text-emerald-300 block">Ganhos de Hoje</span>
+        <div className="pt-2 border-t border-slate-800 grid grid-cols-2 gap-3 text-center">
+          <div className="bg-slate-800/80 p-3 rounded-lg">
+            <span className="text-[11px] text-slate-300 block">Ganhos de Hoje</span>
             <span className="font-extrabold text-lg font-mono-numbers text-white">
               R$ {earningsToday.toFixed(2).replace('.', ',')}
             </span>
           </div>
-          <div className="bg-emerald-900/60 p-3 rounded-xl">
-            <span className="text-[11px] text-emerald-300 block">Meta do Dia</span>
+          <div className="bg-slate-800/80 p-3 rounded-lg">
+            <span className="text-[11px] text-slate-300 block">Meta do Dia</span>
             <span className="font-extrabold text-lg font-mono-numbers text-white">
               {deliveriesDone} / {dailyGoal}
             </span>
@@ -153,13 +152,13 @@ export const CourierPanelView: React.FC = () => {
 
         {/* Progress Bar */}
         <div>
-          <div className="flex justify-between text-[11px] text-emerald-300 mb-1">
+          <div className="flex justify-between text-[11px] text-slate-300 mb-1">
             <span>Progresso da Meta Diária ({progressPercent}%)</span>
             <span>Faltam {Math.max(0, dailyGoal - deliveriesDone)} entregas p/ bônus R$ 25</span>
           </div>
-          <div className="w-full bg-emerald-900 rounded-full h-2 overflow-hidden">
+          <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
             <div
-              className="bg-emerald-400 h-full rounded-full transition-all duration-500"
+              className="bg-amber-500 h-full rounded-full transition-all duration-500"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
@@ -169,12 +168,12 @@ export const CourierPanelView: React.FC = () => {
       {/* Deliveries List */}
       <div className="space-y-3">
         <div className="flex items-center justify-between px-1">
-          <h3 className="font-display font-bold text-sm text-stone-900">
+          <h3 className="font-display font-bold text-sm text-slate-900">
             Minhas Entregas ({myDeliveries.length})
           </h3>
           <button
             onClick={handleExportCourierPdf}
-            className="text-xs text-emerald-700 font-semibold hover:underline flex items-center gap-1 cursor-pointer"
+            className="text-xs text-amber-700 font-semibold hover:underline flex items-center gap-1 cursor-pointer"
           >
             <FileText className="w-3.5 h-3.5" />
             <span>Baixar Extrato PDF</span>
@@ -184,15 +183,15 @@ export const CourierPanelView: React.FC = () => {
         {myDeliveries.map((delivery) => (
           <div
             key={delivery.id}
-            className="bg-white rounded-2xl border border-stone-200 p-4 shadow-xs space-y-3 text-xs"
+            className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs space-y-3 text-xs"
           >
             <div className="flex items-center justify-between">
-              <span className="font-extrabold text-emerald-950 text-sm font-mono-numbers">
+              <span className="font-extrabold text-slate-950 text-sm font-mono-numbers">
                 #{delivery.code}
               </span>
-              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+              <span className={`px-2.5 py-0.5 rounded text-[10px] font-bold uppercase ${
                 delivery.status === 'entregue'
-                  ? 'bg-stone-100 text-stone-600'
+                  ? 'bg-slate-100 text-slate-600'
                   : 'bg-amber-100 text-amber-900'
               }`}>
                 {delivery.status.replace('_', ' ')}
@@ -200,18 +199,18 @@ export const CourierPanelView: React.FC = () => {
             </div>
 
             {/* Destination */}
-            <div className="p-3 bg-stone-50 rounded-xl border border-stone-200 flex items-start gap-2.5">
-              <MapPin className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
+            <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 flex items-start gap-2.5">
+              <MapPin className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
               <div className="flex-1">
-                <p className="font-bold text-stone-900">{delivery.customerName}</p>
-                <p className="text-stone-600">
+                <p className="font-bold text-slate-900">{delivery.customerName}</p>
+                <p className="text-slate-600">
                   {delivery.address.street}, {delivery.address.number} {delivery.address.complement}
                 </p>
-                <p className="text-[11px] text-stone-400">
+                <p className="text-[11px] text-slate-400">
                   {delivery.address.neighborhood} · {delivery.address.city}
                 </p>
               </div>
-              <span className="font-mono-numbers font-bold text-stone-700 bg-white px-2 py-0.5 rounded border border-stone-200 text-[11px]">
+              <span className="font-mono-numbers font-bold text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200 text-[11px]">
                 {delivery.distanceKm} km
               </span>
             </div>
@@ -220,17 +219,17 @@ export const CourierPanelView: React.FC = () => {
             <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={() => handleOpenInAppMaps(`${delivery.address.street}, ${delivery.address.number} - ${delivery.address.neighborhood}, ${delivery.address.city}`)}
-                className="py-2 px-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 rounded-xl font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer border border-emerald-200"
+                className="py-2 px-3 bg-amber-50 hover:bg-amber-100 text-slate-900 rounded-lg font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer border border-amber-200"
               >
-                <Navigation className="w-3.5 h-3.5 text-emerald-700" />
+                <Navigation className="w-3.5 h-3.5 text-amber-700" />
                 <span>Google Maps Rota</span>
               </button>
 
               <a
                 href={`tel:${delivery.customerPhone}`}
-                className="py-2 px-3 bg-stone-100 hover:bg-stone-200 text-stone-800 rounded-xl font-semibold flex items-center justify-center gap-1.5 transition-colors"
+                className="py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg font-semibold flex items-center justify-center gap-1.5 transition-colors"
               >
-                <Phone className="w-3.5 h-3.5 text-emerald-700" />
+                <Phone className="w-3.5 h-3.5 text-amber-700" />
                 <span>Ligar p/ Cliente</span>
               </a>
             </div>
@@ -240,18 +239,18 @@ export const CourierPanelView: React.FC = () => {
               <div className="space-y-2 pt-1">
                 <button
                   onClick={() => handleAdvanceCourierStatus(delivery.id, delivery.status)}
-                  className="w-full py-3 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl shadow-md transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold rounded-lg shadow-xs transition-colors flex items-center justify-center gap-2 cursor-pointer"
                 >
                   {delivery.status === 'separacao' && (
                     <>
                       <Package className="w-4 h-4" />
-                      <span>Confirmar Retirada no CD Agro</span>
+                      <span>Confirmar Retirada no CD LM Store</span>
                     </>
                   )}
                   {delivery.status === 'em_entrega' && (
                     <>
                       <CheckCircle2 className="w-4 h-4" />
-                      <span>Confirmar Entrega ao Cliente (R$ 14,50)</span>
+                      <span>Confirmar Entrega na Obra (R$ 14,50)</span>
                     </>
                   )}
                 </button>

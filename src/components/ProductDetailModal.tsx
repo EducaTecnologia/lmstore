@@ -21,9 +21,14 @@ import {
   ThumbsUp,
   Calculator,
   Ruler,
-  ShoppingCart
+  ShoppingCart,
+  Share2,
+  Copy,
+  Check,
+  Heart
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { OptimizedImage } from './OptimizedImage';
 
 export const ProductDetailModal: React.FC = () => {
   const {
@@ -37,7 +42,9 @@ export const ProductDetailModal: React.FC = () => {
     addItemToShoppingList,
     showToast,
     isLoggedIn,
-    setPostLoginRedirect
+    setPostLoginRedirect,
+    isInWishlist,
+    toggleWishlist
   } = useApp();
 
   const [quantity, setQuantity] = useState(1);
@@ -61,6 +68,50 @@ export const ProductDetailModal: React.FC = () => {
   const hasDiscount = selectedProduct.salePrice !== undefined && selectedProduct.salePrice < selectedProduct.price;
   const activeLot = selectedProduct.lots[0];
   const reviews = getProductReviews(selectedProduct.id);
+  const [copiedLink, setCopiedLink] = useState(false);
+
+  const productUrl =
+    typeof window !== 'undefined'
+      ? `${window.location.origin}/?produto=${encodeURIComponent(selectedProduct.slug)}`
+      : `/?produto=${encodeURIComponent(selectedProduct.slug)}`;
+
+  const formattedPrice = currentPrice.toFixed(2).replace('.', ',');
+  const shareText = `Confira na LM Store: ${selectedProduct.name} (${selectedProduct.brand || selectedProduct.producer}) por apenas R$ ${formattedPrice}/${selectedProduct.unit}!`;
+  const shareTextWithUrl = `${shareText}\n${productUrl}`;
+
+  const copyToClipboard = async (textToCopy: string, toastMsg: string) => {
+    try {
+      await navigator.clipboard.writeText(textToCopy);
+      setCopiedLink(true);
+      showToast(toastMsg, 'success');
+      setTimeout(() => setCopiedLink(false), 2500);
+    } catch {
+      showToast('Link pronto para compartilhamento: ' + productUrl, 'info');
+    }
+  };
+
+  const handleInstagramShare = () => {
+    copyToClipboard(
+      shareTextWithUrl,
+      'Link e legenda copiados! Cole no Story, Bio ou Direct do Instagram.'
+    );
+  };
+
+  const handleNativeShare = async () => {
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share({
+          title: `${selectedProduct.name} | LM Store`,
+          text: shareText,
+          url: productUrl,
+        });
+      } catch {
+        // User cancelled share sheet
+      }
+    } else {
+      copyToClipboard(productUrl, 'Link do produto copiado!');
+    }
+  };
 
   const handleAddToCart = () => {
     addToCart(selectedProduct, quantity);
@@ -131,14 +182,16 @@ export const ProductDetailModal: React.FC = () => {
           <div className="bg-stone-50 p-6 flex flex-col justify-between border-b md:border-b-0 md:border-r border-stone-200/80">
             <div>
               <div className="w-full aspect-square rounded-2xl overflow-hidden bg-white shadow-xs border border-stone-200 relative">
-                <img
+                <OptimizedImage
                   src={selectedProduct.image}
                   alt={selectedProduct.name}
-                  referrerPolicy="no-referrer"
-                  onError={(e) => {
-                    e.currentTarget.src = 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=800&auto=format&fit=crop&q=80';
-                  }}
-                  className="w-full h-full object-cover object-center"
+                  width={720}
+                  height={720}
+                  quality={82}
+                  priority={true}
+                  categoryHint={selectedProduct.categoryId}
+                  className="w-full h-full"
+                  imgClassName="w-full h-full object-cover object-center"
                 />
                 {selectedProduct.brand && (
                   <div className="absolute top-3 left-3 bg-stone-900 text-amber-400 text-[11px] font-black px-2.5 py-1 rounded-md shadow-md tracking-wider flex items-center gap-1.5 uppercase">
@@ -253,10 +306,29 @@ export const ProductDetailModal: React.FC = () => {
                     </button>
                   </div>
 
-                  {/* Title */}
-                  <h2 className="font-display font-bold text-lg sm:text-xl text-stone-900 leading-snug">
-                    {selectedProduct.name}
-                  </h2>
+                  {/* Title + Wishlist Button */}
+                  <div className="flex items-start justify-between gap-2">
+                    <h2 className="font-display font-bold text-lg sm:text-xl text-stone-900 leading-snug">
+                      {selectedProduct.name}
+                    </h2>
+                    <button
+                      type="button"
+                      onClick={() => toggleWishlist(selectedProduct)}
+                      aria-label={isInWishlist(selectedProduct.id) ? 'Remover da Lista de Desejos' : 'Salvar na Lista de Desejos'}
+                      title={isInWishlist(selectedProduct.id) ? 'Remover da Lista de Desejos' : 'Salvar na Lista de Desejos'}
+                      className={`shrink-0 p-2 rounded-xl border transition-all cursor-pointer active:scale-90 ${
+                        isInWishlist(selectedProduct.id)
+                          ? 'bg-red-50 border-red-200 text-red-500'
+                          : 'bg-stone-50 hover:bg-stone-100 border-stone-200 text-stone-400 hover:text-red-500'
+                      }`}
+                    >
+                      <Heart
+                        className={`w-4 h-4 ${
+                          isInWishlist(selectedProduct.id) ? 'fill-red-500 text-red-500' : ''
+                        }`}
+                      />
+                    </button>
+                  </div>
 
                   <div className="flex items-center gap-2 mt-1 text-xs text-stone-500">
                     <span>Marca: <strong className="text-stone-800">{selectedProduct.brand || 'Original'}</strong></span>
@@ -275,6 +347,64 @@ export const ProductDetailModal: React.FC = () => {
                       </span>
                     )}
                     <span className="text-xs text-stone-500 font-medium">/{selectedProduct.unit}</span>
+                  </div>
+
+                  {/* Social Sharing Bar (WhatsApp, Facebook, Instagram, Copy Link) */}
+                  <div className="mt-3.5 p-2.5 bg-stone-50 border border-stone-200/80 rounded-xl flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-[11px] font-bold text-stone-700 flex items-center gap-1.5">
+                      <Share2 className="w-3.5 h-3.5 text-amber-600" />
+                      <span>Compartilhar produto:</span>
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <a
+                        href={`https://api.whatsapp.com/send?text=${encodeURIComponent(shareTextWithUrl)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-2.5 py-1.5 rounded-lg bg-[#25D366] hover:bg-[#1ebe5b] text-white text-[11px] font-bold flex items-center gap-1 transition-colors shadow-2xs"
+                        title="Compartilhar no WhatsApp"
+                      >
+                        <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-current" aria-hidden="true">
+                          <path d="M12.031 2c-5.516 0-9.969 4.453-9.969 9.969 0 1.766.469 3.484 1.344 5l-1.406 5.156 5.281-1.375c1.469.797 3.109 1.219 4.75 1.219 5.516 0 9.969-4.453 9.969-9.969s-4.453-10-9.969-10zm5.813 14.125c-.25.703-1.438 1.344-2 1.422-.516.078-1.172.109-1.891-.125-.438-.141-1-.328-1.719-.641-3.031-1.313-5-4.375-5.156-4.578-.156-.203-1.234-1.641-1.234-3.125s.781-2.219 1.063-2.516c.281-.297.609-.375.813-.375s.406 0 .578.016c.188.016.438-.078.688.531.25.609.859 2.094.938 2.25.078.156.125.344.016.547-.094.203-.156.328-.313.5-.156.172-.328.391-.469.531-.156.156-.328.328-.141.656.188.328.844 1.391 1.813 2.25 1.25 1.109 2.297 1.453 2.625 1.609.328.156.516.125.703-.094.188-.219.813-.953 1.031-1.281.219-.328.438-.266.734-.156.297.109 1.891.891 2.219 1.047.328.156.547.234.625.375.078.141.078.813-.172 1.516z" />
+                        </svg>
+                        <span className="hidden sm:inline">WhatsApp</span>
+                      </a>
+
+                      <a
+                        href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(productUrl)}&quote=${encodeURIComponent(shareText)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-2.5 py-1.5 rounded-lg bg-[#1877F2] hover:bg-[#1465d2] text-white text-[11px] font-bold flex items-center gap-1 transition-colors shadow-2xs"
+                        title="Compartilhar no Facebook"
+                      >
+                        <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-current" aria-hidden="true">
+                          <path d="M22.675 0h-21.35c-.732 0-1.325.593-1.325 1.325v21.351c0 .731.593 1.324 1.325 1.324h11.495v-9.294h-3.128v-3.622h3.128v-2.671c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.795.143v3.24l-1.918.001c-1.504 0-1.795.715-1.795 1.763v2.313h3.587l-.467 3.622h-3.12v9.293h6.116c.73 0 1.323-.593 1.323-1.325v-21.35c0-.732-.593-1.325-1.325-1.325z" />
+                        </svg>
+                        <span className="hidden sm:inline">Facebook</span>
+                      </a>
+
+                      <a
+                        href="https://www.instagram.com/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={handleInstagramShare}
+                        className="px-2.5 py-1.5 rounded-lg bg-gradient-to-tr from-[#f58529] via-[#dd2a7b] to-[#8134af] hover:opacity-90 text-white text-[11px] font-bold flex items-center gap-1 transition-opacity shadow-2xs"
+                        title="Copiar link e abrir Instagram"
+                      >
+                        <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-current" aria-hidden="true">
+                          <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+                        </svg>
+                        <span className="hidden sm:inline">Instagram</span>
+                      </a>
+
+                      <button
+                        type="button"
+                        onClick={handleNativeShare}
+                        className="px-2 py-1.5 rounded-lg bg-stone-200 hover:bg-stone-300 text-stone-800 text-[11px] font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                        title="Copiar link do produto"
+                      >
+                        {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-700" /> : <Copy className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
                   </div>
 
                   {/* Description */}

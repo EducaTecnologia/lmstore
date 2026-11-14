@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   ChevronRight,
   Filter,
@@ -6,11 +6,17 @@ import {
   X,
   Search,
   Building2,
-  CheckCircle2,
-  Layers
+  CheckCircle2
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { ProductCard } from './ProductCard';
+
+function normalizeText(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
 
 export const CategoryPageView: React.FC = () => {
   const {
@@ -18,7 +24,10 @@ export const CategoryPageView: React.FC = () => {
     categories,
     selectedCategorySlug,
     setSelectedCategorySlug,
-    setActiveView
+    setActiveView,
+    searchQuery,
+    setSearchQuery,
+    setBotOpen
   } = useApp();
 
   const [sortOption, setSortOption] = useState<'relevance' | 'price_asc' | 'price_desc' | 'discount'>('relevance');
@@ -28,29 +37,56 @@ export const CategoryPageView: React.FC = () => {
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
 
-  const currentCategory = categories.find((c) => c.slug === selectedCategorySlug) || categories[0];
+  const currentCategory = useMemo(
+    () => (selectedCategorySlug ? categories.find((c) => c.slug === selectedCategorySlug) || null : null),
+    [categories, selectedCategorySlug]
+  );
 
-  // Subcategories available in this category
+  // Reset sub-filters when switching departments or clearing search
+  useEffect(() => {
+    setSelectedSubcategory(null);
+    setSelectedBrand(null);
+  }, [selectedCategorySlug]);
+
+  const hasSearch = searchQuery.trim().length > 0;
+
+  // Base list filtered by Category and/or Global Search Query
+  const baseProducts = useMemo(() => {
+    let list = currentCategory
+      ? products.filter((p) => p.categoryId === currentCategory.id)
+      : [...products];
+
+    if (hasSearch) {
+      const q = normalizeText(searchQuery.trim());
+      const words = q.split(/\s+/);
+      list = list.filter((p) => {
+        const haystack = normalizeText(
+          `${p.name} ${p.brand || ''} ${p.producer} ${p.categoryName} ${p.subcategory} ${p.sku} ${p.description}`
+        );
+        return words.every((word) => haystack.includes(word));
+      });
+    }
+
+    return list;
+  }, [products, currentCategory, hasSearch, searchQuery]);
+
+  // Subcategories available in the current scope
   const subcategories = useMemo(() => {
-    const list = products
-      .filter((p) => p.categoryId === currentCategory.id)
-      .map((p) => p.subcategory)
-      .filter(Boolean);
+    const list = baseProducts.map((p) => p.subcategory).filter(Boolean);
     return Array.from(new Set(list));
-  }, [products, currentCategory.id]);
+  }, [baseProducts]);
 
-  // Brands available in this category
+  // Brands available in the current scope
   const availableBrands = useMemo(() => {
-    const list = products
-      .filter((p) => p.categoryId === currentCategory.id)
+    const list = baseProducts
       .map((p) => p.brand)
       .filter((b): b is string => Boolean(b));
     return Array.from(new Set(list));
-  }, [products, currentCategory.id]);
+  }, [baseProducts]);
 
-  // Filtered & sorted products
+  // Final Filtered & Sorted products
   const filteredProducts = useMemo(() => {
-    let list = products.filter((p) => p.categoryId === currentCategory.id);
+    let list = [...baseProducts];
 
     if (selectedSubcategory) {
       list = list.filter((p) => p.subcategory === selectedSubcategory);
@@ -70,128 +106,194 @@ export const CategoryPageView: React.FC = () => {
     } else if (sortOption === 'price_desc') {
       list.sort((a, b) => (b.salePrice ?? b.price) - (a.salePrice ?? a.price));
     } else if (sortOption === 'discount') {
-      list.sort((a, b) => (b.isPromo ? 1 : 0) - (a.isPromo ? 1 : 0));
+      list.sort((a, b) => {
+        const discA = a.salePrice ? (a.price - a.salePrice) / a.price : 0;
+        const discB = b.salePrice ? (b.price - b.salePrice) / b.price : 0;
+        return discB - discA;
+      });
     }
 
     return list;
-  }, [products, currentCategory.id, selectedSubcategory, selectedBrand, onlyPromo, onlyInStock, sortOption]);
+  }, [baseProducts, selectedSubcategory, selectedBrand, onlyPromo, onlyInStock, sortOption]);
+
+  const clearAllFilters = () => {
+    setSelectedSubcategory(null);
+    setSelectedBrand(null);
+    setOnlyPromo(false);
+    setSearchQuery('');
+  };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
+    <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4">
       {/* Breadcrumb */}
-      <nav className="flex items-center gap-1.5 text-xs text-stone-500 mb-4">
+      <nav className="flex items-center flex-wrap gap-1.5 text-xs text-slate-500 mb-3">
         <button
           onClick={() => {
+            setSearchQuery('');
             setSelectedCategorySlug(null);
             setActiveView('ecommerce');
           }}
-          className="hover:text-amber-600 transition-colors cursor-pointer"
+          className="hover:text-amber-700 transition-colors cursor-pointer font-medium"
         >
           Início
         </button>
-        <ChevronRight className="w-3.5 h-3.5 text-stone-400" />
-        <span className="text-stone-400">LM Store Materiais</span>
-        <ChevronRight className="w-3.5 h-3.5 text-stone-400" />
-        <span className="font-semibold text-stone-900">{currentCategory.name}</span>
+        <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+        {currentCategory ? (
+          <span className="font-semibold text-slate-900">{currentCategory.name}</span>
+        ) : (
+          <span className="font-semibold text-slate-900">
+            {hasSearch ? `Busca: "${searchQuery}"` : 'Catálogo Completo'}
+          </span>
+        )}
       </nav>
 
-      {/* Header Banner */}
-      <div className="relative rounded-2xl overflow-hidden bg-gradient-to-r from-stone-950 via-stone-900 to-amber-950 text-white p-6 sm:p-8 mb-6 shadow-md border border-stone-800">
-        <div className="relative z-10 max-w-xl">
-          <span className="text-[11px] uppercase tracking-widest text-amber-400 font-black">
-            Departamento Oficial LM Store
+      {/* Crisp Marketplace Category / Search Header Banner */}
+      <div className="rounded-xl bg-slate-900 text-white p-5 sm:p-6 mb-5 shadow-xs border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="max-w-2xl">
+          <span className="text-[11px] uppercase tracking-wider text-amber-400 font-bold">
+            {hasSearch
+              ? 'Resultado da Busca LM Store'
+              : currentCategory
+              ? 'Departamento Oficial LM Store'
+              : 'Catálogo Geral de Materiais'}
           </span>
-          <h1 className="font-display font-extrabold text-2xl sm:text-3xl text-white mt-1">
-            {currentCategory.name}
+          <h1 className="font-display font-extrabold text-xl sm:text-2xl text-white mt-0.5">
+            {hasSearch
+              ? `Resultados para "${searchQuery}"`
+              : currentCategory
+              ? currentCategory.name
+              : 'Todos os Materiais de Construção'}
           </h1>
-          <p className="text-xs sm:text-sm text-stone-300 mt-2 leading-relaxed">
-            {currentCategory.description}
+          <p className="text-xs text-slate-300 mt-1.5 leading-relaxed">
+            {hasSearch && currentCategory
+              ? `Filtrando resultados dentro de ${currentCategory.name}.`
+              : currentCategory
+              ? currentCategory.description
+              : 'Compare preços, marcas homologadas ABNT e prazos de entrega direta para sua obra.'}
           </p>
-          <div className="mt-3 text-xs text-amber-300 flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-amber-400" />
-            <span><strong>{filteredProducts.length}</strong> produtos técnicos prontos para entrega na obra.</span>
+          <div className="mt-2.5 text-xs text-amber-300 flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
+            <span>
+              <strong className="font-mono-numbers">{filteredProducts.length}</strong>{' '}
+              {filteredProducts.length === 1 ? 'material encontrado' : 'materiais disponíveis'}
+            </span>
           </div>
         </div>
+
+        {hasSearch && (
+          <button
+            onClick={() => setSearchQuery('')}
+            className="px-3.5 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-semibold border border-white/20 transition-colors flex items-center gap-1.5 self-start sm:self-center cursor-pointer shrink-0"
+          >
+            <X className="w-3.5 h-3.5" />
+            <span>Limpar busca</span>
+          </button>
+        )}
       </div>
 
       {/* Layout: Sidebar Filter (Desktop) + Products Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-5">
         {/* DESKTOP SIDEBAR FILTERS */}
-        <aside className="hidden lg:block lg:col-span-1 space-y-6">
-          <div className="bg-white rounded-2xl border border-stone-200/80 p-5 shadow-xs">
-            <div className="flex items-center justify-between pb-3 border-b border-stone-100">
-              <h3 className="font-display font-bold text-sm text-stone-900 flex items-center gap-2">
+        <aside className="hidden lg:block lg:col-span-1 space-y-5">
+          <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h3 className="font-display font-bold text-sm text-slate-900 flex items-center gap-2">
                 <SlidersHorizontal className="w-4 h-4 text-amber-600" />
-                Filtros Técnicos
+                Filtros
               </h3>
-              {(selectedSubcategory || selectedBrand || onlyPromo) && (
+              {(selectedSubcategory || selectedBrand || onlyPromo || hasSearch) && (
                 <button
-                  onClick={() => {
-                    setSelectedSubcategory(null);
-                    setSelectedBrand(null);
-                    setOnlyPromo(false);
-                  }}
-                  className="text-[11px] text-amber-700 hover:underline cursor-pointer"
+                  onClick={clearAllFilters}
+                  className="text-[11px] font-semibold text-amber-700 hover:underline cursor-pointer"
                 >
-                  Limpar
+                  Limpar tudo
                 </button>
               )}
             </div>
 
-            {/* Subcategories */}
+            {/* Departments Navigation */}
             <div className="mt-4">
-              <p className="text-xs font-bold text-stone-800 mb-2">Subcategorias</p>
+              <p className="text-xs font-bold text-slate-800 mb-2">Departamentos</p>
               <div className="space-y-1">
                 <button
-                  onClick={() => setSelectedSubcategory(null)}
+                  onClick={() => setSelectedCategorySlug(null)}
                   className={`w-full text-left text-xs px-2.5 py-1.5 rounded-lg transition-colors flex items-center justify-between cursor-pointer ${
-                    selectedSubcategory === null
-                      ? 'bg-amber-50 text-amber-900 font-semibold border border-amber-200/70'
-                      : 'text-stone-600 hover:bg-stone-50'
+                    selectedCategorySlug === null
+                      ? 'bg-amber-50 text-amber-900 font-semibold border border-amber-200'
+                      : 'text-slate-600 hover:bg-slate-50'
                   }`}
                 >
-                  <span>Todas as Subcategorias</span>
-                  <span className="text-[10px] text-stone-400 font-mono-numbers">
-                    {products.filter((p) => p.categoryId === currentCategory.id).length}
-                  </span>
+                  <span>Todos os Departamentos</span>
                 </button>
-                {subcategories.map((sub) => {
-                  const count = products.filter(
-                    (p) => p.categoryId === currentCategory.id && p.subcategory === sub
-                  ).length;
-                  return (
-                    <button
-                      key={sub}
-                      onClick={() => setSelectedSubcategory(sub === selectedSubcategory ? null : sub)}
-                      className={`w-full text-left text-xs px-2.5 py-1.5 rounded-lg transition-colors flex items-center justify-between cursor-pointer ${
-                        selectedSubcategory === sub
-                          ? 'bg-amber-50 text-amber-900 font-semibold border border-amber-200/70'
-                          : 'text-stone-600 hover:bg-stone-50'
-                      }`}
-                    >
-                      <span className="truncate">{sub}</span>
-                      <span className="text-[10px] text-stone-400 font-mono-numbers">{count}</span>
-                    </button>
-                  );
-                })}
+                {categories.map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => setSelectedCategorySlug(cat.slug)}
+                    className={`w-full text-left text-xs px-2.5 py-1.5 rounded-lg transition-colors truncate cursor-pointer ${
+                      selectedCategorySlug === cat.slug
+                        ? 'bg-amber-50 text-amber-900 font-semibold border border-amber-200'
+                        : 'text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    {cat.name}
+                  </button>
+                ))}
               </div>
             </div>
 
+            {/* Subcategories */}
+            {subcategories.length > 0 && (
+              <div className="mt-5 pt-4 border-t border-slate-100">
+                <p className="text-xs font-bold text-slate-800 mb-2">Subcategorias</p>
+                <div className="space-y-1">
+                  <button
+                    onClick={() => setSelectedSubcategory(null)}
+                    className={`w-full text-left text-xs px-2.5 py-1.5 rounded-lg transition-colors flex items-center justify-between cursor-pointer ${
+                      selectedSubcategory === null
+                        ? 'bg-slate-100 text-slate-900 font-semibold'
+                        : 'text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    <span>Todas</span>
+                    <span className="text-[10px] text-slate-400 font-mono-numbers">
+                      {baseProducts.length}
+                    </span>
+                  </button>
+                  {subcategories.map((sub) => {
+                    const count = baseProducts.filter((p) => p.subcategory === sub).length;
+                    return (
+                      <button
+                        key={sub}
+                        onClick={() => setSelectedSubcategory(sub === selectedSubcategory ? null : sub)}
+                        className={`w-full text-left text-xs px-2.5 py-1.5 rounded-lg transition-colors flex items-center justify-between cursor-pointer ${
+                          selectedSubcategory === sub
+                            ? 'bg-amber-50 text-amber-900 font-semibold border border-amber-200'
+                            : 'text-slate-600 hover:bg-slate-50'
+                        }`}
+                      >
+                        <span className="truncate">{sub}</span>
+                        <span className="text-[10px] text-slate-400 font-mono-numbers">{count}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* Brands Filter */}
             {availableBrands.length > 0 && (
-              <div className="mt-6 pt-4 border-t border-stone-100">
-                <p className="text-xs font-bold text-stone-800 mb-2 flex items-center gap-1.5">
+              <div className="mt-5 pt-4 border-t border-slate-100">
+                <p className="text-xs font-bold text-slate-800 mb-2 flex items-center gap-1.5">
                   <Building2 className="w-3.5 h-3.5 text-amber-600" />
-                  <span>Marcas Homologadas</span>
+                  <span>Marcas</span>
                 </p>
-                <div className="space-y-1">
+                <div className="space-y-1 max-h-56 overflow-y-auto pr-1">
                   <button
                     onClick={() => setSelectedBrand(null)}
                     className={`w-full text-left text-xs px-2.5 py-1.5 rounded-lg transition-colors flex items-center justify-between cursor-pointer ${
                       selectedBrand === null
-                        ? 'bg-stone-900 text-amber-400 font-semibold'
-                        : 'text-stone-600 hover:bg-stone-50'
+                        ? 'bg-slate-900 text-amber-400 font-semibold'
+                        : 'text-slate-600 hover:bg-slate-50'
                     }`}
                   >
                     <span>Todas as Marcas</span>
@@ -202,13 +304,13 @@ export const CategoryPageView: React.FC = () => {
                       onClick={() => setSelectedBrand(brand === selectedBrand ? null : brand)}
                       className={`w-full text-left text-xs px-2.5 py-1.5 rounded-lg transition-colors flex items-center justify-between cursor-pointer ${
                         selectedBrand === brand
-                          ? 'bg-stone-900 text-amber-400 font-semibold'
-                          : 'text-stone-600 hover:bg-stone-50'
+                          ? 'bg-slate-900 text-amber-400 font-semibold'
+                          : 'text-slate-600 hover:bg-slate-50'
                       }`}
                     >
                       <span className="truncate">{brand}</span>
-                      <span className="text-[10px] text-stone-400 font-mono-numbers">
-                        {products.filter((p) => p.categoryId === currentCategory.id && p.brand === brand).length}
+                      <span className="text-[10px] text-slate-400 font-mono-numbers">
+                        {baseProducts.filter((p) => p.brand === brand).length}
                       </span>
                     </button>
                   ))}
@@ -217,82 +319,55 @@ export const CategoryPageView: React.FC = () => {
             )}
 
             {/* Toggles */}
-            <div className="mt-6 pt-4 border-t border-stone-100 space-y-3">
-              <label className="flex items-center gap-2 cursor-pointer text-xs text-stone-700 select-none">
+            <div className="mt-5 pt-4 border-t border-slate-100 space-y-2.5">
+              <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-700 select-none">
                 <input
                   type="checkbox"
                   checked={onlyPromo}
                   onChange={(e) => setOnlyPromo(e.target.checked)}
-                  className="w-4 h-4 text-amber-600 rounded border-stone-300 focus:ring-amber-500 accent-amber-600"
+                  className="w-4 h-4 text-amber-600 rounded border-slate-300 focus:ring-amber-500 accent-amber-600"
                 />
-                <span>Apenas Ofertas & Preço de Canteiro</span>
+                <span>Apenas em Oferta</span>
               </label>
 
-              <label className="flex items-center gap-2 cursor-pointer text-xs text-stone-700 select-none">
+              <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-700 select-none">
                 <input
                   type="checkbox"
                   checked={onlyInStock}
                   onChange={(e) => setOnlyInStock(e.target.checked)}
-                  className="w-4 h-4 text-amber-600 rounded border-stone-300 focus:ring-amber-500 accent-amber-600"
+                  className="w-4 h-4 text-amber-600 rounded border-slate-300 focus:ring-amber-500 accent-amber-600"
                 />
-                <span>Pronta Entrega no Estoque</span>
+                <span>Pronta Entrega</span>
               </label>
             </div>
-
-            {/* Other categories shortcut */}
-            <div className="mt-6 pt-4 border-t border-stone-100">
-              <p className="text-xs font-bold text-stone-800 mb-2">Outros Departamentos</p>
-              <div className="space-y-1">
-                {categories
-                  .filter((c) => c.id !== currentCategory.id)
-                  .map((cat) => (
-                    <button
-                      key={cat.id}
-                      onClick={() => {
-                        setSelectedCategorySlug(cat.slug);
-                        setSelectedSubcategory(null);
-                        setSelectedBrand(null);
-                      }}
-                      className="w-full text-left text-xs px-2 py-1 text-stone-500 hover:text-amber-700 hover:bg-stone-50 rounded transition-colors truncate cursor-pointer"
-                    >
-                      {cat.name}
-                    </button>
-                  ))}
-              </div>
-            </div>
-
           </div>
         </aside>
 
         {/* PRODUCTS AREA */}
         <main className="col-span-1 lg:col-span-3">
-          
-          {/* Controls Bar: Mobile filter button + sorting selector */}
-          <div className="flex items-center justify-between gap-2 mb-4 bg-white p-3 rounded-2xl border border-stone-200/80 shadow-xs">
-            {/* Mobile Filter Button */}
+          {/* Controls Bar */}
+          <div className="flex items-center justify-between gap-2 mb-4 bg-white p-3 rounded-xl border border-slate-200 shadow-xs">
             <button
               onClick={() => setMobileFilterOpen(true)}
-              className="lg:hidden flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-stone-100 text-xs font-semibold text-stone-800 hover:bg-stone-200 cursor-pointer"
+              className="lg:hidden flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 text-xs font-semibold text-slate-800 hover:bg-slate-200 cursor-pointer"
             >
               <Filter className="w-3.5 h-3.5 text-amber-600" />
               <span>Filtrar</span>
-              {(selectedSubcategory || selectedBrand || onlyPromo) && (
+              {(selectedSubcategory || selectedBrand || onlyPromo || currentCategory) && (
                 <span className="w-2 h-2 rounded-full bg-amber-600" />
               )}
             </button>
 
-            {/* Product count display */}
-            <span className="hidden sm:inline text-xs text-stone-500">
-              Mostrando <strong className="text-stone-900 font-mono-numbers">{filteredProducts.length}</strong> materiais de construção
+            <span className="hidden sm:inline text-xs text-slate-600">
+              <strong className="text-slate-900 font-mono-numbers">{filteredProducts.length}</strong> resultados
             </span>
 
-            {/* Sort Dropdown */}
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-stone-500 hidden sm:inline">Ordenar:</span>
+            <div className="flex items-center gap-2 ml-auto">
+              <span className="text-xs text-slate-500 hidden sm:inline">Ordenar por:</span>
               <select
                 value={sortOption}
                 onChange={(e) => setSortOption(e.target.value as any)}
-                className="bg-stone-100 border border-stone-200 text-xs rounded-xl px-2.5 py-1.5 text-stone-800 focus:outline-none focus:border-amber-600 font-medium cursor-pointer"
+                className="bg-slate-50 border border-slate-200 text-xs rounded-lg px-2.5 py-1.5 text-slate-800 focus:outline-none focus:border-amber-500 font-semibold cursor-pointer"
               >
                 <option value="relevance">Mais Relevantes</option>
                 <option value="price_asc">Menor Preço</option>
@@ -303,29 +378,36 @@ export const CategoryPageView: React.FC = () => {
           </div>
 
           {/* Active filter chips */}
-          {(selectedSubcategory || selectedBrand || onlyPromo) && (
+          {(selectedSubcategory || selectedBrand || onlyPromo || hasSearch) && (
             <div className="flex flex-wrap items-center gap-2 mb-4">
-              <span className="text-xs text-stone-400">Filtros ativos:</span>
+              {hasSearch && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-white border border-slate-200 text-slate-800 text-xs font-medium">
+                  Busca: "{searchQuery}"
+                  <button onClick={() => setSearchQuery('')} className="cursor-pointer ml-0.5">
+                    <X className="w-3 h-3 hover:text-red-600" />
+                  </button>
+                </span>
+              )}
               {selectedSubcategory && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-900 text-xs font-medium">
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-amber-50 border border-amber-200 text-amber-900 text-xs font-medium">
                   {selectedSubcategory}
-                  <button onClick={() => setSelectedSubcategory(null)} className="cursor-pointer">
+                  <button onClick={() => setSelectedSubcategory(null)} className="cursor-pointer ml-0.5">
                     <X className="w-3 h-3 hover:text-amber-700" />
                   </button>
                 </span>
               )}
               {selectedBrand && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-stone-900 text-amber-400 text-xs font-medium">
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-slate-900 text-amber-400 text-xs font-medium">
                   Marca: {selectedBrand}
-                  <button onClick={() => setSelectedBrand(null)} className="cursor-pointer">
+                  <button onClick={() => setSelectedBrand(null)} className="cursor-pointer ml-0.5">
                     <X className="w-3 h-3 hover:text-amber-300" />
                   </button>
                 </span>
               )}
               {onlyPromo && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-900 text-xs font-medium">
-                  Ofertas da Semana
-                  <button onClick={() => setOnlyPromo(false)} className="cursor-pointer">
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-amber-50 border border-amber-200 text-amber-900 text-xs font-medium">
+                  Em Oferta
+                  <button onClick={() => setOnlyPromo(false)} className="cursor-pointer ml-0.5">
                     <X className="w-3 h-3 hover:text-amber-700" />
                   </button>
                 </span>
@@ -333,7 +415,7 @@ export const CategoryPageView: React.FC = () => {
             </div>
           )}
 
-          {/* Product Grid: 2 cols on mobile, 3 cols tablet, 3 on desktop */}
+          {/* Product Grid */}
           {filteredProducts.length > 0 ? (
             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
               {filteredProducts.map((product) => (
@@ -341,39 +423,44 @@ export const CategoryPageView: React.FC = () => {
               ))}
             </div>
           ) : (
-            <div className="bg-white rounded-2xl border border-stone-200 p-12 text-center my-6">
-              <Search className="w-10 h-10 text-stone-300 mx-auto mb-3" />
-              <h3 className="font-display font-bold text-base text-stone-800">
-                Nenhum produto encontrado com estes filtros
+            <div className="bg-white rounded-xl border border-slate-200 p-10 text-center my-4">
+              <Search className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+              <h3 className="font-display font-bold text-base text-slate-900">
+                Nenhum material encontrado
               </h3>
-              <p className="text-xs text-stone-500 mt-1 max-w-sm mx-auto">
-                Tente desmarcar subcategorias ou marcas específicas para visualizar todos os itens da categoria.
+              <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
+                {hasSearch
+                  ? `Não encontramos correspondências para "${searchQuery}" com os filtros atuais. Você pode limpar a busca ou solicitar orçamento ao nosso Assistente Técnico.`
+                  : 'Tente desmarcar subcategorias ou marcas específicas para visualizar todos os itens.'}
               </p>
-              <button
-                onClick={() => {
-                  setSelectedSubcategory(null);
-                  setSelectedBrand(null);
-                  setOnlyPromo(false);
-                }}
-                className="mt-4 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-stone-950 rounded-xl text-xs font-bold transition-colors cursor-pointer"
-              >
-                Limpar Todos os Filtros
-              </button>
+              <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+                <button
+                  onClick={clearAllFilters}
+                  className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg text-xs font-bold transition-colors cursor-pointer"
+                >
+                  Ver Todos os Produtos
+                </button>
+                <button
+                  onClick={() => setBotOpen(true)}
+                  className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-amber-400 rounded-lg text-xs font-bold transition-colors cursor-pointer"
+                >
+                  Consultar Assistente de IA
+                </button>
+              </div>
             </div>
           )}
-
         </main>
       </div>
 
       {/* MOBILE BOTTOM SHEET FOR FILTERS */}
       {mobileFilterOpen && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 backdrop-blur-sm lg:hidden">
-          <div className="bg-white w-full rounded-t-3xl p-5 max-h-[85vh] overflow-y-auto shadow-2xl animate-in slide-in-from-bottom duration-200">
-            <div className="flex items-center justify-between pb-3 border-b border-stone-100">
-              <h3 className="font-display font-bold text-base text-stone-900">Filtros da Obra</h3>
+          <div className="bg-white w-full rounded-t-2xl p-5 max-h-[85vh] overflow-y-auto shadow-2xl animate-in slide-in-from-bottom duration-200">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h3 className="font-display font-bold text-base text-slate-900">Filtros da Obra</h3>
               <button
                 onClick={() => setMobileFilterOpen(false)}
-                className="p-1 text-stone-400 hover:text-stone-600 cursor-pointer"
+                className="p-1 text-slate-400 hover:text-slate-600 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -381,44 +468,75 @@ export const CategoryPageView: React.FC = () => {
 
             <div className="py-4 space-y-4">
               <div>
-                <p className="text-xs font-bold text-stone-800 mb-2">Subcategorias</p>
+                <p className="text-xs font-bold text-slate-800 mb-2">Departamento</p>
                 <div className="flex flex-wrap gap-1.5">
                   <button
-                    onClick={() => setSelectedSubcategory(null)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium border cursor-pointer ${
-                      selectedSubcategory === null
-                        ? 'bg-amber-500 text-stone-950 font-bold border-amber-500'
-                        : 'bg-stone-50 text-stone-700 border-stone-200'
+                    onClick={() => setSelectedCategorySlug(null)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium border cursor-pointer ${
+                      selectedCategorySlug === null
+                        ? 'bg-amber-500 text-slate-950 font-bold border-amber-500'
+                        : 'bg-slate-50 text-slate-700 border-slate-200'
                     }`}
                   >
-                    Todas
+                    Todos
                   </button>
-                  {subcategories.map((sub) => (
+                  {categories.map((cat) => (
                     <button
-                      key={sub}
-                      onClick={() => setSelectedSubcategory(sub === selectedSubcategory ? null : sub)}
-                      className={`px-3 py-1.5 rounded-full text-xs font-medium border cursor-pointer ${
-                        selectedSubcategory === sub
-                          ? 'bg-amber-500 text-stone-950 font-bold border-amber-500'
-                          : 'bg-stone-50 text-stone-700 border-stone-200'
+                      key={cat.id}
+                      onClick={() => setSelectedCategorySlug(cat.slug)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium border cursor-pointer ${
+                        selectedCategorySlug === cat.slug
+                          ? 'bg-amber-500 text-slate-950 font-bold border-amber-500'
+                          : 'bg-slate-50 text-slate-700 border-slate-200'
                       }`}
                     >
-                      {sub}
+                      {cat.name.split(',')[0]}
                     </button>
                   ))}
                 </div>
               </div>
 
+              {subcategories.length > 0 && (
+                <div>
+                  <p className="text-xs font-bold text-slate-800 mb-2">Subcategorias</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    <button
+                      onClick={() => setSelectedSubcategory(null)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium border cursor-pointer ${
+                        selectedSubcategory === null
+                          ? 'bg-amber-500 text-slate-950 font-bold border-amber-500'
+                          : 'bg-slate-50 text-slate-700 border-slate-200'
+                      }`}
+                    >
+                      Todas
+                    </button>
+                    {subcategories.map((sub) => (
+                      <button
+                        key={sub}
+                        onClick={() => setSelectedSubcategory(sub === selectedSubcategory ? null : sub)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium border cursor-pointer ${
+                          selectedSubcategory === sub
+                            ? 'bg-amber-500 text-slate-950 font-bold border-amber-500'
+                            : 'bg-slate-50 text-slate-700 border-slate-200'
+                        }`}
+                      >
+                        {sub}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {availableBrands.length > 0 && (
                 <div>
-                  <p className="text-xs font-bold text-stone-800 mb-2">Marcas</p>
+                  <p className="text-xs font-bold text-slate-800 mb-2">Marcas</p>
                   <div className="flex flex-wrap gap-1.5">
                     <button
                       onClick={() => setSelectedBrand(null)}
-                      className={`px-3 py-1.5 rounded-full text-xs font-medium border cursor-pointer ${
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium border cursor-pointer ${
                         selectedBrand === null
-                          ? 'bg-stone-900 text-amber-400 font-bold border-stone-900'
-                          : 'bg-stone-50 text-stone-700 border-stone-200'
+                          ? 'bg-slate-900 text-amber-400 font-bold border-slate-900'
+                          : 'bg-slate-50 text-slate-700 border-slate-200'
                       }`}
                     >
                       Todas
@@ -427,10 +545,10 @@ export const CategoryPageView: React.FC = () => {
                       <button
                         key={b}
                         onClick={() => setSelectedBrand(b === selectedBrand ? null : b)}
-                        className={`px-3 py-1.5 rounded-full text-xs font-medium border cursor-pointer ${
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium border cursor-pointer ${
                           selectedBrand === b
-                            ? 'bg-stone-900 text-amber-400 font-bold border-stone-900'
-                            : 'bg-stone-50 text-stone-700 border-stone-200'
+                            ? 'bg-slate-900 text-amber-400 font-bold border-slate-900'
+                            : 'bg-slate-50 text-slate-700 border-slate-200'
                         }`}
                       >
                         {b}
@@ -440,8 +558,8 @@ export const CategoryPageView: React.FC = () => {
                 </div>
               )}
 
-              <div className="pt-3 border-t border-stone-100 space-y-3">
-                <label className="flex items-center gap-3 text-xs text-stone-800">
+              <div className="pt-3 border-t border-slate-100 space-y-3">
+                <label className="flex items-center gap-3 text-xs text-slate-800">
                   <input
                     type="checkbox"
                     checked={onlyPromo}
@@ -453,10 +571,16 @@ export const CategoryPageView: React.FC = () => {
               </div>
             </div>
 
-            <div className="pt-4 border-t border-stone-100 flex gap-2">
+            <div className="pt-4 border-t border-slate-100 flex gap-2">
+              <button
+                onClick={clearAllFilters}
+                className="px-4 py-3 bg-slate-100 text-slate-700 font-bold text-xs rounded-lg cursor-pointer"
+              >
+                Limpar
+              </button>
               <button
                 onClick={() => setMobileFilterOpen(false)}
-                className="w-full py-3 bg-amber-500 text-stone-950 font-bold text-xs rounded-xl cursor-pointer"
+                className="flex-1 py-3 bg-amber-500 text-slate-950 font-bold text-xs rounded-lg cursor-pointer"
               >
                 Ver {filteredProducts.length} Materiais
               </button>

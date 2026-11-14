@@ -13,7 +13,6 @@ import {
   Trash2,
   X,
   AlertTriangle,
-  Leaf,
   TrendingUp
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
@@ -149,23 +148,23 @@ export const DeliveryLogisticsView: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-stone-200 shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
         <div>
-          <span className="text-xs font-semibold text-emerald-800 uppercase tracking-wider">
+          <span className="text-xs font-bold text-amber-700 uppercase tracking-wider">
             Torre de Controle Logístico LM Store
           </span>
-          <h1 className="font-display font-extrabold text-2xl text-stone-900 mt-0.5">
-            Zonas de Entrega & Despacho
+          <h1 className="font-display font-extrabold text-2xl text-slate-900 mt-0.5">
+            Zonas de Entrega & Frota Munck
           </h1>
-          <p className="text-xs text-stone-500 mt-0.5">
-            Configuração de frete dinâmico por distância, raios de cobertura e monitoramento de frota.
+          <p className="text-xs text-slate-500 mt-0.5">
+            Configuração de frete dinâmico por distância, raios de cobertura e monitoramento de cargas para obra.
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={handleOpenNewZone}
-            className="px-3.5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-semibold shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+            className="px-3.5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg text-xs font-extrabold shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Nova Zona de Frete</span>
@@ -173,17 +172,17 @@ export const DeliveryLogisticsView: React.FC = () => {
 
           <button
             onClick={() => setMapsModalOpen(true)}
-            className="px-3.5 py-2 bg-stone-100 hover:bg-emerald-50 text-stone-700 hover:text-emerald-950 rounded-xl text-xs font-semibold border border-stone-200 transition-colors flex items-center gap-1.5 cursor-pointer"
+            className="px-3.5 py-2 bg-slate-100 hover:bg-amber-50 text-slate-800 rounded-lg text-xs font-semibold border border-slate-200 transition-colors flex items-center gap-1.5 cursor-pointer"
           >
-            <Navigation className="w-3.5 h-3.5 text-emerald-700" />
+            <Navigation className="w-3.5 h-3.5 text-amber-600" />
             <span>Google Maps</span>
           </button>
 
           <button
             onClick={handleExportLogisticsPdf}
-            className="px-3.5 py-2 bg-emerald-950 hover:bg-emerald-900 text-white rounded-xl text-xs font-semibold shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+            className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
           >
-            <FileText className="w-3.5 h-3.5 text-emerald-300" />
+            <FileText className="w-3.5 h-3.5 text-amber-400" />
             <span>Relatório Oficial (PDF)</span>
           </button>
         </div>
@@ -191,45 +190,45 @@ export const DeliveryLogisticsView: React.FC = () => {
 
       {/* Real-time Logistics Fleet Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-xs">
-          <span className="text-xs font-semibold text-stone-500">Entregas em Andamento</span>
-          <p className="text-2xl font-extrabold text-stone-900 mt-2 font-mono-numbers">
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
+          <span className="text-xs font-semibold text-slate-500">Entregas em Andamento</span>
+          <p className="text-2xl font-extrabold text-slate-900 mt-2 font-mono-numbers">
             {activeDeliveries.length} rotas
           </p>
-          <span className="text-[11px] text-emerald-700 font-semibold flex items-center gap-0.5 mt-1">
+          <span className="text-[11px] text-amber-700 font-semibold flex items-center gap-0.5 mt-1">
             <TrendingUp className="w-3.5 h-3.5" />
             100% monitoradas
           </span>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-xs">
-          <span className="text-xs font-semibold text-stone-500">Tempo Médio de Ciclo</span>
-          <p className="text-2xl font-extrabold text-stone-900 mt-2 font-mono-numbers">
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
+          <span className="text-xs font-semibold text-slate-500">Tempo Médio de Ciclo</span>
+          <p className="text-2xl font-extrabold text-slate-900 mt-2 font-mono-numbers">
             31 min
           </p>
-          <span className="text-[11px] text-stone-500 mt-1 block">
+          <span className="text-[11px] text-slate-500 mt-1 block">
             Meta: abaixo de 45 min
           </span>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-xs">
-          <span className="text-xs font-semibold text-stone-500">Entregadores Ativos</span>
-          <p className="text-2xl font-extrabold text-stone-900 mt-2 font-mono-numbers">
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
+          <span className="text-xs font-semibold text-slate-500">Motoristas Ativos</span>
+          <p className="text-2xl font-extrabold text-slate-900 mt-2 font-mono-numbers">
             6 parceiros
           </p>
-          <span className="text-[11px] text-stone-500 mt-1 block">
-            Motos & e-bikes conectadas
+          <span className="text-[11px] text-slate-500 mt-1 block">
+            Caminhões Toco, Munck & VUC
           </span>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-xs">
-          <span className="text-xs font-semibold text-stone-500">Logística Inteligente LM Store</span>
-          <p className="text-2xl font-extrabold text-emerald-700 mt-2 font-mono-numbers flex items-center gap-1">
-            <Leaf className="w-5 h-5 text-emerald-600" />
-            -14,2 kg CO2
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
+          <span className="text-xs font-semibold text-slate-500">Eficiência de Roteirização</span>
+          <p className="text-2xl font-extrabold text-slate-950 mt-2 font-mono-numbers flex items-center gap-1.5">
+            <Truck className="w-5 h-5 text-amber-600" />
+            98,4% no prazo
           </p>
-          <span className="text-[11px] text-stone-500 mt-1 block">
-            Economia de emissões hoje
+          <span className="text-[11px] text-slate-500 mt-1 block">
+            Descarregamento em canteiros
           </span>
         </div>
       </div>
@@ -258,8 +257,8 @@ export const DeliveryLogisticsView: React.FC = () => {
             <tbody className="divide-y divide-stone-100">
               {deliveryZones.map((zone) => (
                 <tr key={zone.id} className="hover:bg-stone-50/60 transition-colors">
-                  <td className="py-3 px-4 font-bold text-stone-900 flex items-center gap-1.5">
-                    <MapPin className="w-3.5 h-3.5 text-emerald-700" />
+                  <td className="py-3 px-4 font-bold text-slate-900 flex items-center gap-1.5">
+                    <MapPin className="w-3.5 h-3.5 text-amber-600" />
                     <span>{zone.name}</span>
                   </td>
                   <td className="py-3 px-4 font-mono-numbers">{zone.radiusKm} km</td>
@@ -272,7 +271,7 @@ export const DeliveryLogisticsView: React.FC = () => {
                   <td className="py-3 px-4 font-mono-numbers">
                     R$ {zone.minOrder.toFixed(2).replace('.', ',')}
                   </td>
-                  <td className="py-3 px-4 text-stone-600 font-mono-numbers">
+                  <td className="py-3 px-4 text-slate-600 font-mono-numbers">
                     {zone.estimatedMinutes} min
                   </td>
                   <td className="py-3 px-4">
@@ -280,8 +279,8 @@ export const DeliveryLogisticsView: React.FC = () => {
                       onClick={() => handleToggleZone(zone)}
                       className={`px-3 py-1 rounded-full text-[10px] font-bold transition-colors cursor-pointer ${
                         zone.active
-                          ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
-                          : 'bg-stone-100 text-stone-500 border border-stone-300'
+                          ? 'bg-amber-100 text-amber-950 border border-amber-300'
+                          : 'bg-slate-100 text-slate-500 border border-slate-300'
                       }`}
                     >
                       {zone.active ? 'Ativa' : 'Pausada'}
@@ -291,14 +290,14 @@ export const DeliveryLogisticsView: React.FC = () => {
                     <div className="flex items-center justify-end gap-1.5">
                       <button
                         onClick={() => handleOpenEditZone(zone)}
-                        className="p-1.5 text-stone-400 hover:text-emerald-700 rounded-md hover:bg-stone-100 transition-colors cursor-pointer"
+                        className="p-1.5 text-slate-400 hover:text-amber-700 rounded-md hover:bg-slate-100 transition-colors cursor-pointer"
                         title="Editar Zona"
                       >
                         <Edit className="w-3.5 h-3.5" />
                       </button>
                       <button
                         onClick={() => setDeleteConfirmId(zone.id)}
-                        className="p-1.5 text-stone-400 hover:text-red-600 rounded-md hover:bg-stone-100 transition-colors cursor-pointer"
+                        className="p-1.5 text-slate-400 hover:text-red-600 rounded-md hover:bg-slate-100 transition-colors cursor-pointer"
                         title="Excluir Zona"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -313,50 +312,50 @@ export const DeliveryLogisticsView: React.FC = () => {
       </div>
 
       {/* Active Orders In Dispatch */}
-      <div className="bg-white rounded-2xl border border-stone-200 p-5 shadow-xs">
-        <div className="flex items-center justify-between pb-3 border-b border-stone-100">
-          <h3 className="font-display font-bold text-sm text-stone-900">
+      <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+          <h3 className="font-display font-bold text-sm text-slate-900">
             Entregas em Rota e Separação Ativa ({activeDeliveries.length})
           </h3>
-          <span className="text-[11px] text-stone-400">Rastreio Dinâmico com Google Maps</span>
+          <span className="text-[11px] text-slate-400">Rastreio Dinâmico com Google Maps</span>
         </div>
 
         <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
           {activeDeliveries.map((ord) => (
             <div
               key={ord.id}
-              className="p-4 rounded-xl border border-stone-200 bg-stone-50/70 space-y-2 text-xs"
+              className="p-4 rounded-xl border border-slate-200 bg-slate-50/70 space-y-2 text-xs"
             >
               <div className="flex items-center justify-between">
-                <span className="font-bold text-emerald-950 font-mono-numbers text-sm">
+                <span className="font-bold text-slate-950 font-mono-numbers text-sm">
                   #{ord.code}
                 </span>
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-100 text-emerald-900">
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-amber-100 text-amber-950">
                   {ord.status.replace('_', ' ')}
                 </span>
               </div>
 
-              <p className="font-semibold text-stone-800">{ord.customerName}</p>
-              <p className="text-stone-500">
+              <p className="font-semibold text-slate-800">{ord.customerName}</p>
+              <p className="text-slate-500">
                 Destino: {ord.address.street}, {ord.address.number} ({ord.address.neighborhood})
               </p>
-              <p className="text-stone-600 font-mono-numbers text-[11px]">
+              <p className="text-slate-600 font-mono-numbers text-[11px]">
                 Distância: {ord.distanceKm} km · Estimativa: {ord.estimatedDeliveryMinutes} min
               </p>
 
-              <div className="pt-2 border-t border-stone-200 flex items-center justify-between">
+              <div className="pt-2 border-t border-slate-200 flex items-center justify-between">
                 <button
                   onClick={() => handleTraceRouteOnMap(`${ord.address.street}, ${ord.address.number} - ${ord.address.neighborhood}, ${ord.address.city}`)}
-                  className="px-2.5 py-1 bg-white hover:bg-emerald-50 text-emerald-800 border border-stone-200 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+                  className="px-2.5 py-1 bg-white hover:bg-amber-50 text-slate-800 border border-slate-200 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer"
                 >
-                  <Navigation className="w-3 h-3 text-emerald-600" />
+                  <Navigation className="w-3 h-3 text-amber-600" />
                   <span>Traçar Rota no Mapa</span>
                 </button>
 
                 {ord.status === 'em_entrega' && (
                   <button
                     onClick={() => updateOrderStatus(ord.id, 'entregue')}
-                    className="px-3 py-1 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer"
+                    className="px-3 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg text-xs font-bold transition-colors cursor-pointer"
                   >
                     Confirmar Conclusão
                   </button>
@@ -466,7 +465,7 @@ export const DeliveryLogisticsView: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl shadow-xs cursor-pointer"
+                  className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold rounded-lg shadow-xs cursor-pointer"
                 >
                   {editingZone ? 'Salvar Alterações' : 'Criar Zona de Frete'}
                 </button>

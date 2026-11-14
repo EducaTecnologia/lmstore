@@ -198,17 +198,17 @@ export const SmartAIAssistantModal: React.FC<{ isOpen: boolean; onClose: () => v
       });
       const data = await res.json();
       setRecolorLoading(false);
+      if (!res.ok || data.error) {
+        showToast(data.error || 'Erro ao simular pintura com Gemini.', 'warning');
+        return;
+      }
       if (data.resultImage) {
         setRecolorResultImage(data.resultImage);
         showToast(`Parede repintada com a cor "${selectedColorName}" por Inteligência Artificial!`, 'success');
-      } else {
-        setRecolorResultImage(wallImageBase64);
-        showToast(`Simulação gráfica de "${selectedColorName}" processada!`, 'success');
       }
     } catch {
       setRecolorLoading(false);
-      setRecolorResultImage(wallImageBase64);
-      showToast('Simulação visual de cor aplicada com sucesso.', 'success');
+      showToast('Erro de comunicação ao simular cor de parede.', 'warning');
     }
   };
 
@@ -243,17 +243,17 @@ export const SmartAIAssistantModal: React.FC<{ isOpen: boolean; onClose: () => v
       });
       const data = await res.json();
       setSimulateLoading(false);
+      if (!res.ok || data.error) {
+        showToast(data.error || 'Erro ao simular material 3D com Gemini.', 'warning');
+        return;
+      }
       if (data.resultImage) {
         setSimulateResultImage(data.resultImage);
         showToast(`Simulação 3D com ${selectedMaterial} gerada com sucesso!`, 'success');
-      } else {
-        setSimulateResultImage(environmentImageBase64);
-        showToast('Projeto 3D simulado com sucesso.', 'success');
       }
     } catch {
       setSimulateLoading(false);
-      setSimulateResultImage(environmentImageBase64);
-      showToast('Projeto 3D renderizado com sucesso.', 'success');
+      showToast('Erro de comunicação ao simular ambiente 3D.', 'warning');
     }
   };
 
@@ -280,7 +280,7 @@ export const SmartAIAssistantModal: React.FC<{ isOpen: boolean; onClose: () => v
             <div>
               <h3 className="font-display font-extrabold text-base sm:text-lg text-stone-900 flex items-center gap-1.5">
                 <span>Assistente de IA Studio LM Store</span>
-                <span className="text-[10px] bg-amber-400 text-stone-950 font-black px-2 py-0.5 rounded-full uppercase">Gemini 3.8</span>
+                <span className="text-[10px] bg-amber-400 text-stone-950 font-black px-2 py-0.5 rounded-full uppercase">Gemini IA</span>
               </h3>
               <p className="text-xs text-stone-500">
                 Simulador visual 3D, repintura de paredes e dimensionamento técnico de materiais

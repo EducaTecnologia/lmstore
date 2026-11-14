@@ -292,11 +292,43 @@ export interface ShoppingList {
   updatedAt: string;
 }
 
+export interface ChatMaterialRecommendation {
+  name: string;
+  quantity: string;
+  notes: string;
+  matchedProductId?: string;
+  isPromoOption?: boolean;
+}
+
+export interface ChatPaintEstimate {
+  surfaceAreaM2: number;
+  litersNeeded: string;
+  cansRecommended: string;
+  coats: string;
+  dryingTime: string;
+  estimatedCostBRL: number;
+}
+
+export interface ChatRoomEstimate {
+  floorAreaM2: number;
+  floorWithMarginM2: string;
+  cementBags: string;
+  mortarBags: string;
+  groutKg: string;
+  estimatedCostBRL: number;
+}
+
 export interface ContextChatMessage {
   id: string;
   role: 'user' | 'assistant' | 'system';
   content: string;
   timestamp: string;
+  attachments?: { dataUrl: string; label?: string }[];
+  generatedImage?: string;
+  generatedImageWarning?: string;
+  materialsList?: ChatMaterialRecommendation[];
+  paintEstimate?: ChatPaintEstimate;
+  roomEstimate?: ChatRoomEstimate;
   suggestedActions?: { label: string; action: string }[];
   thinkingProcess?: string[];
   modelUsed?: string;

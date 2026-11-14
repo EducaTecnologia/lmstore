@@ -13,6 +13,7 @@ import {
   ChevronLeft
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { OptimizedImage } from './OptimizedImage';
 
 export const CartDrawer: React.FC = () => {
   const {
@@ -150,14 +151,15 @@ export const CartDrawer: React.FC = () => {
                     <div className="flex items-center gap-3 sm:gap-4 min-w-0">
                       {/* Thumbnail */}
                       <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden bg-stone-100 shrink-0 border border-stone-100">
-                        <img
+                        <OptimizedImage
                           src={item.product.image}
                           alt={item.product.name}
-                          referrerPolicy="no-referrer"
-                          onError={(e) => {
-                            e.currentTarget.src = 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=400&auto=format&fit=crop&q=80';
-                          }}
-                          className="w-full h-full object-cover object-center"
+                          width={180}
+                          height={180}
+                          quality={75}
+                          categoryHint={item.product.categoryId}
+                          className="w-full h-full"
+                          imgClassName="w-full h-full object-cover object-center"
                         />
                       </div>
 

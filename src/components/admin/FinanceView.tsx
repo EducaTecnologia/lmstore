@@ -151,23 +151,23 @@ export const FinanceView: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-stone-200 shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
         <div>
-          <span className="text-xs font-semibold text-emerald-800 uppercase tracking-wider">
+          <span className="text-xs font-bold text-amber-700 uppercase tracking-wider">
             Controladoria & Tesouraria LM Store
           </span>
-          <h1 className="font-display font-extrabold text-2xl text-stone-900 mt-0.5">
+          <h1 className="font-display font-extrabold text-2xl text-slate-900 mt-0.5">
             Financeiro & Conciliação de Pagamentos
           </h1>
-          <p className="text-xs text-stone-500 mt-0.5">
-            Conciliação instantânea com webhooks do gateway, taxas contratuais e repasses a entregadores.
+          <p className="text-xs text-slate-500 mt-0.5">
+            Conciliação instantânea com webhooks do gateway, taxas contratuais e repasses de frota.
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={() => setNewTxModalOpen(true)}
-            className="px-3.5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-semibold shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+            className="px-3.5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg text-xs font-extrabold shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Novo Lançamento</span>
@@ -175,17 +175,17 @@ export const FinanceView: React.FC = () => {
 
           <button
             onClick={handleExportPDF}
-            className="px-3.5 py-2 bg-emerald-950 hover:bg-emerald-900 text-white rounded-xl text-xs font-semibold shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+            className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
           >
-            <FileText className="w-3.5 h-3.5 text-emerald-300" />
+            <FileText className="w-3.5 h-3.5 text-amber-400" />
             <span>Relatório Oficial (PDF)</span>
           </button>
 
           <button
             onClick={handleExportCSV}
-            className="px-3.5 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-xl text-xs font-semibold shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer border border-stone-200"
+            className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer border border-slate-200"
           >
-            <Download className="w-3.5 h-3.5 text-stone-600" />
+            <Download className="w-3.5 h-3.5 text-slate-600" />
             <span>CSV</span>
           </button>
         </div>
@@ -198,38 +198,38 @@ export const FinanceView: React.FC = () => {
           <p className="text-2xl font-extrabold text-stone-900 mt-2 font-mono-numbers">
             R$ {totalGrossRevenue.toFixed(2).replace('.', ',')}
           </p>
-          <span className="text-[11px] text-emerald-700 font-semibold flex items-center gap-0.5 mt-1">
+          <span className="text-[11px] text-amber-700 font-semibold flex items-center gap-0.5 mt-1">
             <ArrowUpRight className="w-3.5 h-3.5" />
             100% conciliada
           </span>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-xs">
-          <span className="text-xs font-semibold text-stone-500">Taxas de Adquirentes</span>
-          <p className="text-2xl font-extrabold text-stone-900 mt-2 font-mono-numbers">
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
+          <span className="text-xs font-semibold text-slate-500">Taxas de Adquirentes</span>
+          <p className="text-2xl font-extrabold text-slate-900 mt-2 font-mono-numbers">
             R$ {totalGatewayFees.toFixed(2).replace('.', ',')}
           </p>
-          <span className="text-[11px] text-stone-500 mt-1 block">
+          <span className="text-[11px] text-slate-500 mt-1 block">
             0,99% Pix · 2,99% Cartão
           </span>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-xs">
-          <span className="text-xs font-semibold text-stone-500">Repasses Entregadores</span>
-          <p className="text-2xl font-extrabold text-stone-900 mt-2 font-mono-numbers">
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
+          <span className="text-xs font-semibold text-slate-500">Repasses Logísticos</span>
+          <p className="text-2xl font-extrabold text-slate-900 mt-2 font-mono-numbers">
             R$ {totalCourierPayouts.toFixed(2).replace('.', ',')}
           </p>
-          <span className="text-[11px] text-stone-500 mt-1 block">
+          <span className="text-[11px] text-slate-500 mt-1 block">
             Pago semanalmente via Pix
           </span>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-xs">
-          <span className="text-xs font-semibold text-stone-500">Resultado Líquido</span>
-          <p className="text-2xl font-extrabold text-emerald-800 mt-2 font-mono-numbers">
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
+          <span className="text-xs font-semibold text-slate-500">Resultado Líquido</span>
+          <p className="text-2xl font-extrabold text-slate-950 mt-2 font-mono-numbers">
             R$ {netResult.toFixed(2).replace('.', ',')}
           </p>
-          <span className="text-[11px] text-emerald-700 font-semibold mt-1 block">
+          <span className="text-[11px] text-amber-700 font-semibold mt-1 block">
             Margem líquida de contribuição
           </span>
         </div>
@@ -237,29 +237,29 @@ export const FinanceView: React.FC = () => {
 
       {/* Visual Chart: Payment Methods Distribution & Gateway Reconciliation */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-stone-200 p-5 shadow-xs">
-          <div className="flex items-center justify-between pb-3 border-b border-stone-100">
-            <h3 className="font-display font-bold text-sm text-stone-900 flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-emerald-700" />
+        <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 p-5 shadow-xs">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <h3 className="font-display font-bold text-sm text-slate-900 flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-amber-600" />
               Distribuição por Meio de Pagamento & Liquidez
             </h3>
-            <span className="text-[11px] text-stone-400 font-mono-numbers">Tempo Real</span>
+            <span className="text-[11px] text-slate-400 font-mono-numbers">Tempo Real</span>
           </div>
 
           <div className="mt-4 space-y-4">
             <div>
               <div className="flex justify-between text-xs mb-1">
-                <span className="font-semibold text-stone-700 flex items-center gap-1.5">
-                  <QrCode className="w-3.5 h-3.5 text-emerald-600" />
+                <span className="font-semibold text-slate-700 flex items-center gap-1.5">
+                  <QrCode className="w-3.5 h-3.5 text-amber-600" />
                   Pix Instantâneo (Liquidação imediata)
                 </span>
-                <span className="font-mono-numbers font-bold text-stone-900">
+                <span className="font-mono-numbers font-bold text-slate-900">
                   R$ {pixRevenue.toFixed(2).replace('.', ',')} ({pixPct}%)
                 </span>
               </div>
-              <div className="w-full bg-stone-100 rounded-full h-3 overflow-hidden">
+              <div className="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
                 <div
-                  className="bg-emerald-500 h-full rounded-full transition-all duration-500"
+                  className="bg-amber-500 h-full rounded-full transition-all duration-500"
                   style={{ width: `${pixPct}%` }}
                 />
               </div>
@@ -304,32 +304,32 @@ export const FinanceView: React.FC = () => {
         </div>
 
         {/* DRE Gerencial Table */}
-        <div className="bg-white rounded-2xl border border-stone-200 p-5 shadow-xs flex flex-col justify-between">
+        <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between">
           <div>
-            <h3 className="font-display font-bold text-sm text-stone-900 pb-3 border-b border-stone-100 flex items-center gap-2">
-              <FileSpreadsheet className="w-4 h-4 text-emerald-700" />
+            <h3 className="font-display font-bold text-sm text-slate-900 pb-3 border-b border-slate-100 flex items-center gap-2">
+              <FileSpreadsheet className="w-4 h-4 text-amber-600" />
               Demonstrativo de Resultado (DRE)
             </h3>
 
-            <div className="mt-4 divide-y divide-stone-100 text-xs">
-              <div className="py-2 flex justify-between font-bold text-stone-900">
+            <div className="mt-4 divide-y divide-slate-100 text-xs">
+              <div className="py-2 flex justify-between font-bold text-slate-900">
                 <span>(+) RECEITA OPERACIONAL</span>
                 <span className="font-mono-numbers">R$ {totalGrossRevenue.toFixed(2).replace('.', ',')}</span>
               </div>
 
-              <div className="py-2 flex justify-between text-stone-600">
+              <div className="py-2 flex justify-between text-slate-600">
                 <span>(-) Taxas de Gateway</span>
                 <span className="font-mono-numbers text-red-600">- R$ {totalGatewayFees.toFixed(2).replace('.', ',')}</span>
               </div>
 
-              <div className="py-2 flex justify-between text-stone-600">
+              <div className="py-2 flex justify-between text-slate-600">
                 <span>(-) Repasses Logísticos</span>
                 <span className="font-mono-numbers text-red-600">- R$ {totalCourierPayouts.toFixed(2).replace('.', ',')}</span>
               </div>
             </div>
           </div>
 
-          <div className="py-3 flex justify-between font-extrabold text-sm text-emerald-950 bg-emerald-50/70 p-3 rounded-xl mt-4">
+          <div className="py-3 flex justify-between font-extrabold text-sm text-amber-400 bg-slate-900 p-3 rounded-lg mt-4">
             <span>(=) RESULTADO LÍQUIDO</span>
             <span className="font-mono-numbers">R$ {netResult.toFixed(2).replace('.', ',')}</span>
           </div>
@@ -382,14 +382,14 @@ export const FinanceView: React.FC = () => {
                     R$ {tx.fee.toFixed(2).replace('.', ',')}
                   </td>
                   <td className={`py-3 px-4 font-mono-numbers font-bold ${
-                    tx.netAmount >= 0 ? 'text-emerald-700' : 'text-red-700'
+                    tx.netAmount >= 0 ? 'text-slate-900' : 'text-red-700'
                   }`}>
                     R$ {tx.netAmount.toFixed(2).replace('.', ',')}
                   </td>
                   <td className="py-3 px-4">
                     <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
                       tx.status === 'concluido'
-                        ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                        ? 'bg-amber-50 text-amber-800 border border-amber-200'
                         : 'bg-red-50 text-red-800 border border-red-200'
                     }`}>
                       {tx.status}
@@ -502,7 +502,7 @@ export const FinanceView: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl shadow-xs cursor-pointer"
+                  className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold rounded-lg shadow-xs cursor-pointer"
                 >
                   Gravar Lançamento
                 </button>

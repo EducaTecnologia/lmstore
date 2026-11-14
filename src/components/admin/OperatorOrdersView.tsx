@@ -26,7 +26,7 @@ export const OperatorOrdersView: React.FC = () => {
   const [chatOpen, setChatOpen] = useState(false);
   const [operatorMsg, setOperatorMsg] = useState('');
   const [cancelModalOrder, setCancelModalOrder] = useState<Order | null>(null);
-  const [cancelReason, setCancelReason] = useState('Item esgotado no campo');
+  const [cancelReason, setCancelReason] = useState('Item esgotado no pátio/almoxarifado');
 
   const handleExportOperatorPdf = () => {
     openReportModal(
@@ -48,17 +48,17 @@ export const OperatorOrdersView: React.FC = () => {
           o.status.toUpperCase(),
           `${o.estimatedDeliveryMinutes} min`,
         ]),
-        summary: 'Todas as ordens de colheita e conferência de lote foram atendidas com precisão. O tempo médio entre recebimento e despacho permaneceu inferior a 18 minutos.',
+        summary: 'Todas as ordens de separação de carga e conferência de lote foram atendidas com precisão no CD LM Store. O tempo médio entre faturamento e despacho permaneceu inferior a 18 minutos.',
       }
     );
   };
 
   const columns: { status: OrderStatus; label: string; color: string }[] = [
-    { status: 'novo', label: '1. Novo Pedido', color: 'border-blue-400 bg-blue-50/30' },
-    { status: 'pago', label: '2. Pago (Aprovado)', color: 'border-emerald-400 bg-emerald-50/30' },
-    { status: 'separacao', label: '3. Em Separação FEFO', color: 'border-amber-400 bg-amber-50/30' },
-    { status: 'em_entrega', label: '4. Em Rota de Entrega', color: 'border-purple-400 bg-purple-50/30' },
-    { status: 'entregue', label: '5. Entregue', color: 'border-stone-400 bg-stone-50/30' },
+    { status: 'novo', label: '1. Novo Pedido', color: 'border-blue-500 bg-blue-50/30' },
+    { status: 'pago', label: '2. Pago (Aprovado)', color: 'border-amber-500 bg-amber-50/30' },
+    { status: 'separacao', label: '3. Separação de Carga', color: 'border-orange-500 bg-orange-50/30' },
+    { status: 'em_entrega', label: '4. Em Rota (Munck/Toco)', color: 'border-slate-700 bg-slate-50/40' },
+    { status: 'entregue', label: '5. Entregue na Obra', color: 'border-stone-400 bg-stone-50/30' },
   ];
 
   const getNextStatus = (current: OrderStatus): OrderStatus | null => {
@@ -91,25 +91,25 @@ export const OperatorOrdersView: React.FC = () => {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-stone-200 shadow-xs">
         <div>
-          <span className="text-xs font-semibold text-emerald-800 uppercase tracking-wider">
-            Painel do Operador
+          <span className="text-xs font-bold text-amber-700 uppercase tracking-wider">
+            Painel do Operador · LM Store
           </span>
-          <h1 className="font-display font-extrabold text-2xl text-stone-900 mt-0.5">
+          <h1 className="font-display font-extrabold text-2xl text-slate-900 mt-0.5">
             Fila Operacional de Pedidos (Kanban)
           </h1>
-          <p className="text-xs text-stone-500 mt-0.5">
-            Gerencie o ciclo de separação, conferência de lotes FEFO e despacho aos entregadores.
+          <p className="text-xs text-slate-500 mt-0.5">
+            Gerencie a separação de materiais, conferência de lotes e despacho para a obra.
           </p>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={handleExportOperatorPdf}
-            className="px-3.5 py-1.5 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+            className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
           >
-            <FileText className="w-3.5 h-3.5 text-emerald-300" />
+            <FileText className="w-3.5 h-3.5 text-amber-400" />
             <span>Relatório Operacional (PDF)</span>
           </button>
-          <span className="px-3 py-1.5 bg-emerald-50 text-emerald-900 border border-emerald-200 rounded-xl text-xs font-bold font-mono-numbers">
+          <span className="px-3 py-1.5 bg-amber-50 text-amber-900 border border-amber-200 rounded-lg text-xs font-bold font-mono-numbers">
             {orders.length} pedidos
           </span>
         </div>
@@ -142,27 +142,27 @@ export const OperatorOrdersView: React.FC = () => {
                     <div
                       key={order.id}
                       onClick={() => setSelectedOrder(order)}
-                      className="p-3 bg-stone-50/80 hover:bg-stone-50 border border-stone-200 hover:border-emerald-400 rounded-xl transition-all cursor-pointer shadow-xs"
+                      className="p-3 bg-slate-50/80 hover:bg-white border border-slate-200 hover:border-amber-500 rounded-xl transition-all cursor-pointer shadow-xs"
                     >
                       <div className="flex items-center justify-between">
-                        <span className="font-extrabold text-xs text-emerald-950 font-mono-numbers">
+                        <span className="font-extrabold text-xs text-slate-950 font-mono-numbers">
                           #{order.code}
                         </span>
-                        <span className="text-[10px] text-stone-400 font-mono-numbers">
+                        <span className="text-[10px] text-slate-400 font-mono-numbers">
                           {order.timeline[0]?.timestamp}
                         </span>
                       </div>
 
-                      <p className="font-semibold text-xs text-stone-900 mt-1 truncate">
+                      <p className="font-semibold text-xs text-slate-900 mt-1 truncate">
                         {order.customerName}
                       </p>
 
-                      <p className="text-[11px] text-stone-500 mt-0.5">
-                        {order.items.length} itens · <strong className="text-stone-800 font-mono-numbers">R$ {order.total.toFixed(2).replace('.', ',')}</strong>
+                      <p className="text-[11px] text-slate-500 mt-0.5">
+                        {order.items.length} itens · <strong className="text-slate-800 font-mono-numbers">R$ {order.total.toFixed(2).replace('.', ',')}</strong>
                       </p>
 
-                      <div className="mt-2 pt-2 border-t border-stone-200/60 flex items-center justify-between">
-                        <span className="text-[10px] uppercase font-bold text-stone-500 font-mono">
+                      <div className="mt-2 pt-2 border-t border-slate-200/60 flex items-center justify-between">
+                        <span className="text-[10px] uppercase font-bold text-slate-500 font-mono">
                           {order.paymentMethod}
                         </span>
 
@@ -172,7 +172,7 @@ export const OperatorOrdersView: React.FC = () => {
                               e.stopPropagation();
                               handleAdvanceStatus(order);
                             }}
-                            className="px-2 py-1 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-[10px] font-bold flex items-center gap-0.5 transition-colors cursor-pointer"
+                            className="px-2 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-md text-[10px] font-bold flex items-center gap-0.5 transition-colors cursor-pointer"
                             title={`Avançar para: ${next}`}
                           >
                             <span>Avançar</span>
@@ -239,11 +239,11 @@ export const OperatorOrdersView: React.FC = () => {
                     <div key={idx} className="p-2.5 flex items-center justify-between bg-white text-xs">
                       <div>
                         <span className="font-semibold text-stone-900 block">{it.productName}</span>
-                        <span className="text-[10px] text-stone-400">
-                          {it.quantity} {it.unit} · Lote Atribuído: <strong className="text-emerald-800">{it.lotNumber}</strong>
+                        <span className="text-[10px] text-slate-400">
+                          {it.quantity} {it.unit} · Lote Atribuído: <strong className="text-amber-700">{it.lotNumber}</strong>
                         </span>
                       </div>
-                      <span className="font-bold font-mono-numbers text-stone-800">
+                      <span className="font-bold font-mono-numbers text-slate-800">
                         R$ {it.total.toFixed(2).replace('.', ',')}
                       </span>
                     </div>
@@ -253,26 +253,26 @@ export const OperatorOrdersView: React.FC = () => {
 
               {/* Courier info */}
               {selectedOrder.courierName && (
-                <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-emerald-950">
-                  <span className="font-bold block">Entregador Responsável</span>
+                <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-slate-900">
+                  <span className="font-bold block">Motorista Responsável</span>
                   <span>{selectedOrder.courierName} ({selectedOrder.courierPhone})</span>
                 </div>
               )}
 
               {/* Operator Quick Chat Form */}
-              <div className="pt-2 border-t border-stone-100">
-                <p className="font-bold text-stone-900 mb-1">Mensagem Direta ao Cliente</p>
+              <div className="pt-2 border-t border-slate-100">
+                <p className="font-bold text-slate-900 mb-1">Mensagem Direta ao Cliente</p>
                 <form onSubmit={handleSendOperatorChat} className="flex gap-2">
                   <input
                     type="text"
-                    placeholder="Ex: Seu pedido de hortifrúti já está pronto e embalado..."
+                    placeholder="Ex: Seu carregamento de materiais já foi separado..."
                     value={operatorMsg}
                     onChange={(e) => setOperatorMsg(e.target.value)}
-                    className="flex-1 p-2 bg-stone-50 border border-stone-200 rounded-lg text-xs"
+                    className="flex-1 p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs"
                   />
                   <button
                     type="submit"
-                    className="px-3 py-2 bg-emerald-700 text-white rounded-lg text-xs font-semibold"
+                    className="px-3 py-2 bg-slate-900 text-amber-400 rounded-lg text-xs font-bold cursor-pointer"
                   >
                     Enviar
                   </button>
@@ -280,12 +280,12 @@ export const OperatorOrdersView: React.FC = () => {
               </div>
             </div>
 
-            <div className="pt-3 border-t border-stone-200 flex justify-between gap-2">
+            <div className="pt-3 border-t border-slate-200 flex justify-between gap-2">
               <button
                 onClick={() => {
                   setCancelModalOrder(selectedOrder);
                 }}
-                className="px-3 py-2 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-bold rounded-xl cursor-pointer"
+                className="px-3 py-2 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-bold rounded-lg cursor-pointer"
               >
                 Cancelar Pedido
               </button>
@@ -295,7 +295,7 @@ export const OperatorOrdersView: React.FC = () => {
                   handleAdvanceStatus(selectedOrder);
                   setSelectedOrder(null);
                 }}
-                className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold rounded-xl cursor-pointer"
+                className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-extrabold rounded-lg cursor-pointer"
               >
                 Avançar Status do Pedido
               </button>
@@ -324,10 +324,10 @@ export const OperatorOrdersView: React.FC = () => {
                 onChange={(e) => setCancelReason(e.target.value)}
                 className="w-full p-2 bg-stone-50 border border-stone-200 rounded-xl text-xs"
               >
-                <option value="Item esgotado no campo">Item esgotado no campo</option>
+                <option value="Item esgotado no pátio/almoxarifado">Item esgotado no pátio/almoxarifado</option>
                 <option value="Solicitação direta do cliente">Solicitação direta do cliente</option>
-                <option value="Endereço não localizado">Endereço não localizado pelo entregador</option>
-                <option value="Avaria na colheita">Avaria identificada na colheita</option>
+                <option value="Endereço de obra não localizado">Endereço de obra não localizado pelo motorista</option>
+                <option value="Avaria na movimentação de carga">Avaria identificada na separação/carga</option>
               </select>
             </div>
             <div className="mt-4 flex gap-2">

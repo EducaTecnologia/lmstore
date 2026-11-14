@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { Product } from '../../types';
+import { OptimizedImage } from '../OptimizedImage';
 
 export const StockManagementView: React.FC = () => {
   const { products, addInventoryLot, deleteInventoryLot, openReportModal, showToast } = useApp();
@@ -86,7 +87,7 @@ export const StockManagementView: React.FC = () => {
           p.lots[0]?.expirationDate || 'N/A',
           p.lots[0]?.supplier || p.producer,
         ]),
-        summary: 'Todas as safras hortifrúti e perecíveis foram rotuladas no recebimento térmico. Não há lotes vencidos presentes no centro de distribuição.',
+        summary: 'Todos os lotes de cimento, argamassas, pisos e materiais estruturais foram conferidos no recebimento do almoxarifado LM Store. Não há lotes vencidos ou avariados presentes no pátio.',
       }
     );
   };
@@ -94,51 +95,51 @@ export const StockManagementView: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-stone-200 shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
         <div>
-          <span className="text-xs font-semibold text-emerald-800 uppercase tracking-wider">
-            Gestão de Estoque Agroecológico
+          <span className="text-xs font-bold text-amber-700 uppercase tracking-wider">
+            Gestão de Estoque & Almoxarifado LM Store
           </span>
-          <h1 className="font-display font-extrabold text-2xl text-stone-900 mt-0.5">
-            Controle de Saldo & Lotes FEFO
+          <h1 className="font-display font-extrabold text-2xl text-slate-900 mt-0.5">
+            Controle de Saldo & Lotes de Materiais
           </h1>
-          <p className="text-xs text-stone-500 mt-0.5">
-            Regra FEFO (First Expired, First Out) com alertas automáticos de validade e reposição.
+          <p className="text-xs text-slate-500 mt-0.5">
+            Monitoramento de paletes, sacaria, validades de cimentos/tintas e alertas automáticos de reposição.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <input
             type="text"
-            placeholder="Buscar por produto ou categoria..."
+            placeholder="Buscar por material ou departamento..."
             value={searchFilter}
             onChange={(e) => setSearchFilter(e.target.value)}
-            className="p-2 bg-stone-50 border border-stone-200 rounded-xl text-xs focus:outline-none focus:border-emerald-600"
+            className="p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:border-amber-500"
           />
         </div>
       </div>
 
       {/* Products & Lots Table */}
-      <div className="bg-white rounded-2xl border border-stone-200 overflow-hidden shadow-xs">
-        <div className="p-4 bg-stone-50 border-b border-stone-200 flex items-center justify-between text-xs">
-          <span className="font-bold text-stone-900">
-            Catálogo de Estoque Físico ({filteredProducts.length} itens)
+      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
+        <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between text-xs">
+          <span className="font-bold text-slate-900">
+            Estoque Físico de Materiais ({filteredProducts.length} itens)
           </span>
-          <span className="text-stone-500 text-[11px]">
-            Clique em "Receber Lote" para dar entrada de nova safra
+          <span className="text-slate-500 text-[11px]">
+            Clique em "Receber Lote" para dar entrada de carga
           </span>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs divide-y divide-stone-100">
-            <thead className="bg-stone-50/60 text-stone-400 uppercase text-[10px] font-semibold">
+          <table className="w-full text-left text-xs divide-y divide-slate-100">
+            <thead className="bg-slate-50/60 text-slate-500 uppercase text-[10px] font-bold">
               <tr>
-                <th className="py-3 px-4">Produto & Categoria</th>
+                <th className="py-3 px-4">Material & Departamento</th>
                 <th className="py-3 px-4">Saldo Atual</th>
-                <th className="py-3 px-4">Semáforo de Estoque</th>
-                <th className="py-3 px-4">Lote Ativo (FEFO)</th>
-                <th className="py-3 px-4">Data de Validade</th>
-                <th className="py-3 px-4">Fornecedor / Cooperativa</th>
+                <th className="py-3 px-4">Status do Estoque</th>
+                <th className="py-3 px-4">Lote Ativo</th>
+                <th className="py-3 px-4">Validade / Garantia</th>
+                <th className="py-3 px-4">Fabricante / Fornecedor</th>
                 <th className="py-3 px-4 text-right">Ação</th>
               </tr>
             </thead>
@@ -152,10 +153,14 @@ export const StockManagementView: React.FC = () => {
                   <tr key={p.id} className="hover:bg-stone-50/60 transition-colors">
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-2.5">
-                        <img
+                        <OptimizedImage
                           src={p.image}
                           alt={p.name}
-                          className="w-10 h-10 rounded-lg object-cover bg-stone-100 shrink-0"
+                          width={96}
+                          height={96}
+                          quality={72}
+                          categoryHint={p.categoryId}
+                          className="w-10 h-10 rounded-lg shrink-0"
                         />
                         <div>
                           <p className="font-bold text-stone-900">{p.name}</p>
@@ -180,20 +185,20 @@ export const StockManagementView: React.FC = () => {
                           Excesso (&gt; {p.maxStock})
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-800 border border-slate-200">
                           Saldo Ideal
                         </span>
                       )}
                     </td>
 
-                    <td className="py-3 px-4 font-mono text-[11px] text-stone-700 font-semibold">
-                      {activeLot?.lotNumber || 'LT-PADRAO'}
+                    <td className="py-3 px-4 font-mono text-[11px] text-slate-700 font-semibold">
+                      {activeLot?.lotNumber || 'LM-PADRAO'}
                     </td>
 
-                    <td className="py-3 px-4 text-stone-600 font-mono-numbers">
+                    <td className="py-3 px-4 text-slate-600 font-mono-numbers">
                       {activeLot ? (
                         <span className="flex items-center gap-1">
-                          <Calendar className="w-3.5 h-3.5 text-stone-400" />
+                          <Calendar className="w-3.5 h-3.5 text-slate-400" />
                           {activeLot.expirationDate}
                         </span>
                       ) : (
@@ -201,14 +206,14 @@ export const StockManagementView: React.FC = () => {
                       )}
                     </td>
 
-                    <td className="py-3 px-4 text-stone-600 truncate max-w-[150px]">
+                    <td className="py-3 px-4 text-slate-600 truncate max-w-[150px]">
                       {activeLot?.supplier || p.producer}
                     </td>
 
                     <td className="py-3 px-4 text-right">
                       <button
                         onClick={() => handleOpenLotModal(p)}
-                        className="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 font-bold rounded-lg text-xs transition-colors flex items-center gap-1 ml-auto cursor-pointer"
+                        className="px-2.5 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-lg text-xs transition-colors flex items-center gap-1 ml-auto cursor-pointer"
                       >
                         <Plus className="w-3.5 h-3.5" />
                         <span>Receber Lote</span>
@@ -225,13 +230,13 @@ export const StockManagementView: React.FC = () => {
       {/* New Lot Modal */}
       {selectedProductForLot && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl border border-stone-200 animate-in fade-in">
-            <div className="flex items-center justify-between pb-3 border-b border-stone-100">
+          <div className="bg-white rounded-xl max-w-md w-full p-5 shadow-2xl border border-slate-200 animate-in fade-in">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div>
-                <span className="text-[10px] text-emerald-700 uppercase font-bold tracking-wider">
-                  Entrada de Mercadoria FEFO
+                <span className="text-[10px] text-amber-700 uppercase font-bold tracking-wider">
+                  Entrada de Mercadoria LM Store
                 </span>
-                <h3 className="font-display font-bold text-base text-stone-900">
+                <h3 className="font-display font-bold text-base text-slate-900">
                   {selectedProductForLot.name}
                 </h3>
               </div>
@@ -313,7 +318,7 @@ export const StockManagementView: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl text-xs shadow-md transition-colors"
+                  className="flex-1 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold rounded-lg text-xs shadow-xs transition-colors cursor-pointer"
                 >
                   Confirmar Entrada no Estoque
                 </button>

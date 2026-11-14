@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { Product } from '../types';
+import { OptimizedImage } from './OptimizedImage';
 
 export const ShoppingListsView: React.FC = () => {
   const {
@@ -177,10 +178,14 @@ export const ShoppingListsView: React.FC = () => {
                     return (
                       <div key={item.productId} className="py-3 flex items-center justify-between gap-3">
                         <div className="flex items-center gap-3 min-w-0">
-                          <img
+                          <OptimizedImage
                             src={prod.image}
                             alt={prod.name}
-                            className="w-12 h-12 rounded-xl object-cover bg-stone-100 shrink-0 border border-stone-200/60"
+                            width={112}
+                            height={112}
+                            quality={72}
+                            categoryHint={prod.categoryId}
+                            className="w-12 h-12 rounded-xl shrink-0 border border-stone-200/60"
                           />
                           <div className="truncate">
                             <span className="text-[10px] text-emerald-800 font-semibold uppercase tracking-wider block">
@@ -262,10 +267,14 @@ export const ShoppingListsView: React.FC = () => {
                       className="p-3 rounded-xl border border-stone-200/90 bg-stone-50/60 flex items-center justify-between gap-2"
                     >
                       <div className="flex items-center gap-2 min-w-0">
-                        <img
+                        <OptimizedImage
                           src={prod.image}
                           alt={prod.name}
-                          className="w-10 h-10 rounded-lg object-cover bg-stone-100 shrink-0"
+                          width={96}
+                          height={96}
+                          quality={72}
+                          categoryHint={prod.categoryId}
+                          className="w-10 h-10 rounded-lg shrink-0"
                         />
                         <div className="truncate">
                           <p className="text-xs font-semibold text-stone-900 truncate">{prod.name}</p>

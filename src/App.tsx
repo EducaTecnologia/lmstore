@@ -18,6 +18,7 @@ import { UserProfileView } from './components/UserProfileView';
 import { InstitutionalView } from './components/InstitutionalView';
 import { ProductDetailModal } from './components/ProductDetailModal';
 import { ShoppingListsView } from './components/ShoppingListsView';
+import { WishlistView } from './components/WishlistView';
 import { ContextChatbot } from './components/ContextChatbot';
 import { GoogleMapsAgentModal } from './components/GoogleMapsAgentModal';
 import { PDFReportModal } from './components/PDFReportModal';
@@ -86,7 +87,7 @@ const AppContent: React.FC = () => {
 
   // Public / Customer Views
   return (
-    <div className="min-h-screen flex flex-col bg-[#F8FAF8] text-[#142318]">
+    <div className="min-h-screen flex flex-col bg-[#EBEBEB] text-slate-900">
       {/* Responsive Header */}
       <Header />
 
@@ -98,6 +99,7 @@ const AppContent: React.FC = () => {
         {activeView === 'checkout' && <CheckoutModal />}
         {activeView === 'order_tracking' && <OrderTrackingView />}
         {activeView === 'shopping_lists' && <ShoppingListsView />}
+        {activeView === 'wishlist' && <WishlistView />}
         {activeView === 'login' && <LoginView />}
         {activeView === 'profile' && <UserProfileView />}
         {activeView === 'institutional' && <InstitutionalView />}

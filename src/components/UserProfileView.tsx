@@ -53,7 +53,8 @@ export const UserProfileView: React.FC = () => {
     setActiveView,
     logout,
     showToast,
-    openReportModal
+    openReportModal,
+    wishlistIds
   } = useApp();
 
   const [activeTab, setActiveTab] = useState<'overview' | 'orders' | 'addresses' | 'wallet' | 'coupons'>('overview');
@@ -683,6 +684,26 @@ export const UserProfileView: React.FC = () => {
                   <div>
                     <p className="text-xs font-bold text-slate-800">Cupons de Desconto da Obra</p>
                     <p className="text-[11px] text-slate-500">{coupons.length} cupons disponíveis para uso</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-400" />
+              </button>
+
+              <button
+                onClick={() => setActiveView('wishlist')}
+                className="w-full px-4 py-3 hover:bg-slate-50 rounded-2xl flex items-center justify-between text-left transition-colors cursor-pointer"
+              >
+                <div className="flex items-center gap-3.5">
+                  <div className="w-8 h-8 rounded-xl bg-red-50 text-red-500 flex items-center justify-center">
+                    <Heart className="w-4 h-4 fill-red-500 text-red-500" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-slate-800">Minha Lista de Desejos</p>
+                    <p className="text-[11px] text-slate-500">
+                      {wishlistIds.length === 0
+                        ? 'Nenhum produto salvo para compra futura'
+                        : `${wishlistIds.length} ${wishlistIds.length === 1 ? 'produto salvo' : 'produtos salvos'} para compra futura`}
+                    </p>
                   </div>
                 </div>
                 <ChevronRight className="w-4 h-4 text-slate-400" />

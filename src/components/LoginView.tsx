@@ -72,8 +72,10 @@ export const LoginView: React.FC = () => {
         <div className="hidden lg:flex relative bg-stone-950 text-white p-8 sm:p-10 flex-col justify-between overflow-hidden min-h-[580px]">
           {/* Background Photography with Scrim */}
           <img
-            src="https://images.unsplash.com/photo-1541888946425-d0fbb18615f3?w=1000&auto=format&fit=crop&q=80"
+            src="https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=1000&auto=format&fit=crop&q=80"
             alt="Canteiro de obras e materiais LM Store"
+            loading="lazy"
+            decoding="async"
             referrerPolicy="no-referrer"
             onError={(e) => {
               e.currentTarget.src = 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=1000&auto=format&fit=crop&q=80';

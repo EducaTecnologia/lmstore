@@ -18,6 +18,7 @@ import {
   X
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { OptimizedImage } from './OptimizedImage';
 
 export const OrderTrackingView: React.FC = () => {
   const {
@@ -298,10 +299,13 @@ export const OrderTrackingView: React.FC = () => {
               {order.items.map((item, idx) => (
                 <div key={idx} className="py-2.5 flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2 min-w-0">
-                    <img
+                    <OptimizedImage
                       src={item.productImage}
                       alt={item.productName}
-                      className="w-10 h-10 rounded-lg object-cover bg-stone-100 shrink-0"
+                      width={96}
+                      height={96}
+                      quality={72}
+                      className="w-10 h-10 rounded-lg shrink-0"
                     />
                     <div className="truncate">
                       <p className="font-semibold text-stone-900 truncate">{item.productName}</p>

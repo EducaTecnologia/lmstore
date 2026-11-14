@@ -4,21 +4,27 @@ import {
   ShoppingCart,
   DollarSign,
   AlertTriangle,
-  Users,
-  Clock,
   ArrowUpRight,
-  ShieldCheck,
-  Package,
-  Layers,
   FileText,
   Plus,
   Edit,
   Trash2,
-  X,
-  Check
+  X
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { Product } from '../../types';
+import { OptimizedImage } from '../OptimizedImage';
+import { LMStoreLogo } from '../LMStoreLogo';
+
+const CATEGORY_OPTIONS = [
+  { id: 'cat-estrutura', name: 'Estrutura e Alvenaria' },
+  { id: 'cat-hidraulica', name: 'Hidráulica e Encanamento' },
+  { id: 'cat-eletrica', name: 'Elétrica e Iluminação' },
+  { id: 'cat-acabamento', name: 'Acabamento, Pisos e Revestimentos' },
+  { id: 'cat-tintas', name: 'Tintas, Químicos e Pintura' },
+  { id: 'cat-coberturas', name: 'Coberturas, Telhados e Esquadrias' },
+  { id: 'cat-ferramentas', name: 'Ferramentas, Equipamentos e EPIs' },
+];
 
 export const AdminDashboard: React.FC = () => {
   const {
@@ -28,31 +34,28 @@ export const AdminDashboard: React.FC = () => {
     updateProduct,
     deleteProduct,
     financialTransactions,
-    setActiveView,
-    openReportModal,
-    showToast
+    openReportModal
   } = useApp();
 
-  // Product CRUD states
   const [productModalOpen, setProductModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
-  // Form states for Product
+  // Construction material CRUD states
   const [name, setName] = useState('');
-  const [categoryName, setCategoryName] = useState('Hortifrúti Fresco');
-  const [categoryId, setCategoryId] = useState('cat-hortifruti');
-  const [subcategory, setSubcategory] = useState('Frutas & Legumes');
-  const [price, setPrice] = useState(12.50);
+  const [categoryName, setCategoryName] = useState('Estrutura e Alvenaria');
+  const [categoryId, setCategoryId] = useState('cat-estrutura');
+  const [subcategory, setSubcategory] = useState('Cimentos e Argamassas');
+  const [price, setPrice] = useState(38.90);
   const [salePrice, setSalePrice] = useState<number | undefined>(undefined);
-  const [weightValue, setWeightValue] = useState('500g');
-  const [unit, setUnit] = useState<'un' | 'kg' | 'g'>('un');
+  const [weightValue, setWeightValue] = useState('50kg');
+  const [unit, setUnit] = useState<'un' | 'sc' | 'm2' | 'br' | 'cx' | 'rolo'>('un');
   const [stock, setStock] = useState(50);
   const [minStock, setMinStock] = useState(15);
-  const [producer, setProducer] = useState('Fazenda Cooperativa Agro');
-  const [originLocation, setOriginLocation] = useState('Holambra - SP');
-  const [description, setDescription] = useState('Produto agroecológico com procedência e colheita fresca garantida.');
-  const [isOrganic, setIsOrganic] = useState(true);
+  const [producer, setProducer] = useState('Votoran');
+  const [originLocation, setOriginLocation] = useState('Centro Fabril - São Paulo / SP');
+  const [description, setDescription] = useState('Material de construção certificado conforme normas ABNT com garantia de fábrica.');
+  const [isAbntCertified, setIsAbntCertified] = useState(true);
 
   const totalRevenue = financialTransactions
     .filter((t) => t.type === 'receita_venda')
@@ -63,15 +66,19 @@ export const AdminDashboard: React.FC = () => {
   const handleOpenNewProduct = () => {
     setEditingProduct(null);
     setName('');
-    setPrice(12.50);
+    setCategoryName('Estrutura e Alvenaria');
+    setCategoryId('cat-estrutura');
+    setSubcategory('Cimentos e Argamassas');
+    setPrice(38.90);
     setSalePrice(undefined);
-    setWeightValue('500g');
-    setStock(40);
-    setMinStock(10);
-    setProducer('Cooperativa Terra Nova');
-    setOriginLocation('São Paulo - SP');
-    setDescription('Produto agro sustentável selecionado.');
-    setIsOrganic(true);
+    setWeightValue('50kg');
+    setUnit('sc');
+    setStock(60);
+    setMinStock(15);
+    setProducer('Votoran');
+    setOriginLocation('Centro Logístico LM Store - SP');
+    setDescription('Material de construção de alta performance com certificação técnica.');
+    setIsAbntCertified(true);
     setProductModalOpen(true);
   };
 
@@ -84,13 +91,13 @@ export const AdminDashboard: React.FC = () => {
     setPrice(p.price);
     setSalePrice(p.salePrice);
     setWeightValue(p.weightValue);
-    setUnit(p.unit as any);
+    setUnit((p.unit as any) || 'un');
     setStock(p.stock);
     setMinStock(p.minStock);
-    setProducer(p.producer);
+    setProducer(p.brand || p.producer);
     setOriginLocation(p.originLocation);
     setDescription(p.description);
-    setIsOrganic(!!p.isOrganic);
+    setIsAbntCertified(true);
     setProductModalOpen(true);
   };
 
@@ -105,6 +112,7 @@ export const AdminDashboard: React.FC = () => {
         categoryName,
         categoryId,
         subcategory,
+        brand: producer || editingProduct.brand,
         price: Number(price),
         salePrice: salePrice ? Number(salePrice) : undefined,
         weightValue,
@@ -114,7 +122,6 @@ export const AdminDashboard: React.FC = () => {
         producer,
         originLocation,
         description,
-        isOrganic,
       });
     } else {
       addProduct({
@@ -124,7 +131,7 @@ export const AdminDashboard: React.FC = () => {
         categoryId,
         subcategory,
         brand: producer || 'LM Store',
-        sku: `SKU-${Date.now().toString().slice(-6)}`,
+        sku: `LM-${Date.now().toString().slice(-6)}`,
         barcode: `7891000${Math.floor(100000 + Math.random() * 900000)}`,
         price: Number(price),
         salePrice: salePrice ? Number(salePrice) : undefined,
@@ -136,18 +143,18 @@ export const AdminDashboard: React.FC = () => {
         producer,
         originLocation,
         description,
-        isOrganic,
-        isPerishable: true,
+        isOrganic: isAbntCertified,
+        isPerishable: false,
         rating: 5.0,
         reviewsCount: 1,
-        image: 'https://images.unsplash.com/photo-1541888946425-d0fbb186a5b3?w=600&auto=format&fit=crop&q=80',
+        image: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600&auto=format&fit=crop&q=80',
         lots: [
           {
             id: `lot-${Date.now()}`,
-            lotNumber: `LT-${new Date().getFullYear()}-01`,
+            lotNumber: `LM-${new Date().getFullYear()}-01`,
             quantity: Number(stock),
-            unitCost: Number(price) * 0.45,
-            expirationDate: '2026-11-20',
+            unitCost: Number(price) * 0.65,
+            expirationDate: '2030-12-31',
             receivedAt: new Date().toISOString().slice(0, 10),
             supplier: producer,
           },
@@ -167,17 +174,17 @@ export const AdminDashboard: React.FC = () => {
 
   const handleExportAdminPdf = () => {
     openReportModal(
-      'Relatório Executivo & Desempenho Operacional',
-      'Demonstrativo consolidado de faturamento, pedidos e governança de materiais de construção LM Store.',
+      'Relatório Executivo & Desempenho Operacional LM Store',
+      'Demonstrativo consolidado de faturamento, pedidos de materiais e governança dos 7 perfis.',
       'admin',
       {
         metrics: [
           { label: 'Faturamento Bruto', value: `R$ ${totalRevenue.toFixed(2).replace('.', ',')}` },
           { label: 'Total de Pedidos', value: `${orders.length} pedidos` },
           { label: 'Ticket Médio', value: `R$ ${(totalRevenue / Math.max(1, orders.length)).toFixed(2).replace('.', ',')}` },
-          { label: 'SKUs Ativos', value: `${products.length} itens` },
+          { label: 'SKUs Ativos', value: `${products.length} materiais` },
         ],
-        headers: ['Código', 'Cliente', 'Valor Total', 'Método', 'Status'],
+        headers: ['Código', 'Cliente / Obra', 'Valor Total', 'Método', 'Status'],
         items: orders.map((o) => [
           `#${o.code}`,
           o.customerName,
@@ -185,177 +192,196 @@ export const AdminDashboard: React.FC = () => {
           o.paymentMethod.toUpperCase(),
           o.status.toUpperCase(),
         ]),
-        summary: `A operação atual atingiu conformidade total nos prazos de separação e distribuição. A retenção de clientes orgânicos registrou crescimento expressivo com zero ocorrências de avaria em perecíveis.`,
+        summary: 'Operação de materiais de construção operando com conformidade nos prazos de separação, conferência de cargas paletizadas e despacho via frota Munck.',
       }
     );
   };
 
   return (
-    <div className="space-y-6">
-      {/* Top Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 sm:p-6 rounded-3xl border border-stone-200 shadow-xs">
-        <div>
-          <span className="text-xs font-semibold text-emerald-800 uppercase tracking-wider">
-            Painel Executivo LM Store
-          </span>
-          <h1 className="font-display font-extrabold text-2xl text-stone-900 mt-0.5">
-            Visão Geral das Operações de Materiais
-          </h1>
-          <p className="text-xs text-stone-500 mt-1">
-            Indicadores de faturamento, gestão de produtos e governança dos 7 perfis.
-          </p>
+    <div className="space-y-5">
+      {/* Top Brand Executive Banner */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-900 text-white p-5 sm:p-6 rounded-xl border border-slate-800 border-l-4 border-l-amber-500 shadow-xs">
+        <div className="flex items-start gap-3.5">
+          <div className="hidden sm:block shrink-0 mt-0.5">
+            <LMStoreLogo variant="icon" size="md" />
+          </div>
+          <div>
+            <span className="text-[11px] font-bold text-amber-400 uppercase tracking-wider">
+              Painel do Administrador Geral · LM Store
+            </span>
+            <h1 className="font-display font-extrabold text-xl sm:text-2xl text-white mt-0.5">
+              Visão Geral de Materiais & Operações
+            </h1>
+            <p className="text-xs text-slate-300 mt-1">
+              Indicadores comerciais, gestão de catálogo técnico e governança dos 7 perfis da loja.
+            </p>
+          </div>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={handleExportAdminPdf}
-            className="px-3.5 py-2 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl text-xs font-semibold shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+            className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 rounded-lg text-xs font-semibold shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
           >
-            <FileText className="w-3.5 h-3.5 text-emerald-300" />
-            <span>Exportar Relatório PDF</span>
+            <FileText className="w-3.5 h-3.5 text-amber-400" />
+            <span>Exportar PDF</span>
           </button>
 
           <button
             onClick={handleOpenNewProduct}
-            className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+            className="px-3.5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg text-xs font-extrabold shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
           >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Cadastrar Produto</span>
+            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+            <span>Cadastrar Material</span>
           </button>
         </div>
       </div>
 
       {/* 4 Core KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-xs">
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-stone-500">Vendas do Dia</span>
-            <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
+            <span className="text-xs font-semibold text-slate-500">Vendas do Dia</span>
+            <div className="w-8 h-8 rounded-lg bg-slate-900 text-amber-400 flex items-center justify-center">
               <DollarSign className="w-4 h-4" />
             </div>
           </div>
-          <p className="text-2xl font-extrabold text-stone-900 mt-2 font-mono-numbers">
+          <p className="text-2xl font-extrabold text-slate-950 mt-2 font-mono-numbers">
             R$ {totalRevenue.toFixed(2).replace('.', ',')}
           </p>
-          <span className="text-[11px] text-emerald-700 font-semibold flex items-center gap-0.5 mt-1">
+          <span className="text-[11px] text-amber-700 font-semibold flex items-center gap-0.5 mt-1">
             <ArrowUpRight className="w-3.5 h-3.5" />
             +18.4% vs meta prevista
           </span>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-xs">
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-stone-500">Pedidos Totais</span>
-            <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
+            <span className="text-xs font-semibold text-slate-500">Pedidos Totais</span>
+            <div className="w-8 h-8 rounded-lg bg-amber-50 border border-amber-200 text-amber-700 flex items-center justify-center">
               <ShoppingCart className="w-4 h-4" />
             </div>
           </div>
-          <p className="text-2xl font-extrabold text-stone-900 mt-2 font-mono-numbers">
+          <p className="text-2xl font-extrabold text-slate-950 mt-2 font-mono-numbers">
             {orders.length}
           </p>
-          <span className="text-[11px] text-stone-500 mt-1 block">
-            {orders.filter((o) => o.status === 'em_entrega').length} pedidos em rota agora
+          <span className="text-[11px] text-slate-500 mt-1 block">
+            {orders.filter((o) => o.status === 'em_entrega').length} cargas em rota para obra
           </span>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-xs">
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-stone-500">Ticket Médio</span>
-            <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
-              <TrendingUp className="w-4 h-4" />
+            <span className="text-xs font-semibold text-slate-500">Ticket Médio</span>
+            <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-800 flex items-center justify-center">
+              <TrendingUp className="w-4 h-4 text-amber-600" />
             </div>
           </div>
-          <p className="text-2xl font-extrabold text-stone-900 mt-2 font-mono-numbers">
+          <p className="text-2xl font-extrabold text-slate-950 mt-2 font-mono-numbers">
             R$ {(totalRevenue / Math.max(1, orders.length)).toFixed(2).replace('.', ',')}
           </p>
-          <span className="text-[11px] text-emerald-700 font-semibold flex items-center gap-0.5 mt-1">
+          <span className="text-[11px] text-amber-700 font-semibold flex items-center gap-0.5 mt-1">
             <ArrowUpRight className="w-3.5 h-3.5" />
-            Alto engajamento em perecíveis
+            Alta recorrência em obra bruta
           </span>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-xs">
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-stone-500">Alertas de Estoque</span>
+            <span className="text-xs font-semibold text-slate-500">Alertas de Estoque</span>
             <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-              lowStockProducts.length > 0 ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-700'
+              lowStockProducts.length > 0 ? 'bg-red-50 text-red-600' : 'bg-amber-50 text-amber-700'
             }`}>
               <AlertTriangle className="w-4 h-4" />
             </div>
           </div>
-          <p className="text-2xl font-extrabold text-stone-900 mt-2 font-mono-numbers">
+          <p className="text-2xl font-extrabold text-slate-950 mt-2 font-mono-numbers">
             {lowStockProducts.length}
           </p>
-          <span className="text-[11px] text-amber-700 font-medium mt-1 block">
-            {lowStockProducts.length > 0 ? 'Produtos exigem reposição FEFO' : 'Todos os saldos operando normais'}
+          <span className="text-[11px] text-slate-600 font-medium mt-1 block">
+            {lowStockProducts.length > 0 ? 'Itens exigem reposição imediata' : 'Todos os lotes operando normais'}
           </span>
         </div>
       </div>
 
       {/* PRODUCTS CRUD MANAGEMENT TABLE */}
-      <div className="bg-white rounded-3xl border border-stone-200 p-5 sm:p-6 shadow-xs space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-stone-100">
+      <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
           <div>
-            <h3 className="font-display font-bold text-base text-stone-900">
-              Gestão de Catálogo de Produtos ({products.length} itens)
+            <h3 className="font-display font-bold text-base text-slate-900">
+              Gestão do Catálogo LM Store ({products.length} materiais)
             </h3>
-            <p className="text-xs text-stone-500">
-              Visualizar, editar preços, safras e excluir produtos com confirmação.
+            <p className="text-xs text-slate-500">
+              Visualizar, editar preços, especificações e gerenciar SKUs da loja.
             </p>
           </div>
           <button
             onClick={handleOpenNewProduct}
-            className="px-3 py-1.5 bg-emerald-50 text-emerald-900 hover:bg-emerald-100 font-bold rounded-xl text-xs border border-emerald-200 flex items-center gap-1 transition-colors self-start sm:self-auto cursor-pointer"
+            className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-amber-400 font-bold rounded-lg text-xs flex items-center gap-1 transition-colors self-start sm:self-auto cursor-pointer"
           >
-            <Plus className="w-3.5 h-3.5 text-emerald-700" />
+            <Plus className="w-3.5 h-3.5" />
             <span>Adicionar Novo SKU</span>
           </button>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs divide-y divide-stone-100">
-            <thead className="bg-stone-50/70 text-stone-400 uppercase text-[10px] font-semibold">
+          <table className="w-full text-left text-xs divide-y divide-slate-100">
+            <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] font-bold">
               <tr>
-                <th className="py-2.5 px-3">Produto</th>
+                <th className="py-2.5 px-3">Material</th>
                 <th className="py-2.5 px-3">Departamento</th>
-                <th className="py-2.5 px-3">Preço Regular</th>
-                <th className="py-2.5 px-3">Preço Promo</th>
-                <th className="py-2.5 px-3">Saldo</th>
-                <th className="py-2.5 px-3">Produtor</th>
+                <th className="py-2.5 px-3">Preço Normal</th>
+                <th className="py-2.5 px-3">Preço Oferta</th>
+                <th className="py-2.5 px-3">Estoque</th>
+                <th className="py-2.5 px-3">Marca / Fabricante</th>
                 <th className="py-2.5 px-3 text-right">Ações</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-stone-100">
+            <tbody className="divide-y divide-slate-100">
               {products.map((p) => (
-                <tr key={p.id} className="hover:bg-stone-50/60 transition-colors">
+                <tr key={p.id} className="hover:bg-slate-50/80 transition-colors">
                   <td className="py-2.5 px-3">
-                    <div className="flex items-center gap-2">
-                      <img src={p.image} alt={p.name} className="w-8 h-8 rounded-lg object-cover bg-stone-100 shrink-0" />
+                    <div className="flex items-center gap-2.5">
+                      <OptimizedImage
+                        src={p.image}
+                        alt={p.name}
+                        width={80}
+                        height={80}
+                        quality={70}
+                        categoryHint={p.categoryId}
+                        className="w-9 h-9 rounded-lg border border-slate-200 shrink-0"
+                      />
                       <div>
-                        <span className="font-bold text-stone-900 block truncate max-w-[170px]">{p.name}</span>
-                        <span className="text-[10px] text-stone-400">{p.sku}</span>
+                        <span className="font-bold text-slate-900 block truncate max-w-[190px]">{p.name}</span>
+                        <span className="text-[10px] text-slate-400 font-mono">{p.sku}</span>
                       </div>
                     </div>
                   </td>
-                  <td className="py-2.5 px-3 text-stone-600">{p.categoryName}</td>
-                  <td className="py-2.5 px-3 font-mono-numbers font-semibold">R$ {p.price.toFixed(2).replace('.', ',')}</td>
-                  <td className="py-2.5 px-3 font-mono-numbers text-emerald-700 font-bold">
+                  <td className="py-2.5 px-3 text-slate-600">{p.categoryName}</td>
+                  <td className="py-2.5 px-3 font-mono-numbers font-semibold text-slate-800">
+                    R$ {p.price.toFixed(2).replace('.', ',')}
+                  </td>
+                  <td className="py-2.5 px-3 font-mono-numbers text-amber-700 font-bold">
                     {p.salePrice ? `R$ ${p.salePrice.toFixed(2).replace('.', ',')}` : '—'}
                   </td>
-                  <td className="py-2.5 px-3 font-mono-numbers">{p.stock} {p.unit}</td>
-                  <td className="py-2.5 px-3 text-stone-500 truncate max-w-[130px]">{p.producer}</td>
+                  <td className="py-2.5 px-3 font-mono-numbers font-medium text-slate-800">
+                    {p.stock} {p.unit}
+                  </td>
+                  <td className="py-2.5 px-3 text-slate-600 truncate max-w-[140px]">
+                    {p.brand || p.producer}
+                  </td>
                   <td className="py-2.5 px-3 text-right space-x-1">
                     <button
                       onClick={() => handleOpenEditProduct(p)}
-                      className="p-1.5 text-stone-500 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer"
-                      title="Editar Produto"
+                      className="p-1.5 text-slate-500 hover:text-amber-700 hover:bg-amber-50 rounded-lg transition-colors cursor-pointer"
+                      title="Editar Material"
                     >
                       <Edit className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={() => setDeleteConfirmId(p.id)}
-                      className="p-1.5 text-stone-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
-                      title="Excluir Produto"
+                      className="p-1.5 text-slate-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                      title="Excluir Material"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -370,65 +396,61 @@ export const AdminDashboard: React.FC = () => {
       {/* PRODUCT CREATE / EDIT MODAL */}
       {productModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-6 shadow-2xl border border-stone-200 animate-in fade-in">
-            <div className="flex items-center justify-between pb-3 border-b border-stone-100">
-              <h3 className="font-display font-bold text-base text-stone-900">
-                {editingProduct ? 'Editar Produto' : 'Cadastrar Novo Produto'}
+          <div className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-6 shadow-2xl border border-slate-200 animate-in fade-in">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h3 className="font-display font-bold text-base text-slate-900">
+                {editingProduct ? 'Editar Material de Construção' : 'Cadastrar Novo Material'}
               </h3>
-              <button onClick={() => setProductModalOpen(false)} className="p-1 text-stone-400 hover:text-stone-600">
+              <button onClick={() => setProductModalOpen(false)} className="p-1 text-slate-400 hover:text-slate-600 cursor-pointer">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <form onSubmit={handleSaveProduct} className="py-4 space-y-3 text-xs">
               <div>
-                <label className="block text-stone-700 font-semibold mb-1">Nome do Produto</label>
+                <label className="block text-slate-700 font-semibold mb-1">Nome do Material</label>
                 <input
                   type="text"
                   required
-                  placeholder="Ex: Mandioca Manteiga Descascada 1kg"
+                  placeholder="Ex: Cimento CP-II F 32 Todas as Obras 50kg"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full p-2 bg-stone-50 border border-stone-200 rounded-xl"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-amber-500"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-stone-700 font-semibold mb-1">Departamento</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Departamento</label>
                   <select
                     value={categoryName}
                     onChange={(e) => {
+                      const chosen = CATEGORY_OPTIONS.find((c) => c.name === e.target.value);
                       setCategoryName(e.target.value);
-                      if (e.target.value === 'Hortifrúti Fresco') setCategoryId('cat-hortifruti');
-                      if (e.target.value === 'Carnes & Açougue') setCategoryId('cat-carnes');
-                      if (e.target.value === 'Grãos & Cereais') setCategoryId('cat-graos');
+                      if (chosen) setCategoryId(chosen.id);
                     }}
-                    className="w-full p-2 bg-stone-50 border border-stone-200 rounded-xl"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-amber-500"
                   >
-                    <option value="Hortifrúti Fresco">Hortifrúti Fresco</option>
-                    <option value="Carnes & Açougue">Carnes & Açougue</option>
-                    <option value="Grãos & Cereais">Grãos & Cereais</option>
-                    <option value="Café & Cacau">Café & Cacau</option>
-                    <option value="Frios & Laticínios">Frios & Laticínios</option>
-                    <option value="Produtos de Limpeza">Produtos de Limpeza</option>
+                    {CATEGORY_OPTIONS.map((c) => (
+                      <option key={c.id} value={c.name}>{c.name}</option>
+                    ))}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-stone-700 font-semibold mb-1">Subcategoria</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Subcategoria</label>
                   <input
                     type="text"
                     required
                     value={subcategory}
                     onChange={(e) => setSubcategory(e.target.value)}
-                    className="w-full p-2 bg-stone-50 border border-stone-200 rounded-xl"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-amber-500"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-3 gap-2">
                 <div>
-                  <label className="block text-stone-700 font-semibold mb-1">Preço Normal (R$)</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Preço Normal (R$)</label>
                   <input
                     type="number"
                     step="0.01"
@@ -436,11 +458,11 @@ export const AdminDashboard: React.FC = () => {
                     required
                     value={price}
                     onChange={(e) => setPrice(Number(e.target.value))}
-                    className="w-full p-2 bg-stone-50 border border-stone-200 rounded-xl"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-amber-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-stone-700 font-semibold mb-1">Preço Promo (R$)</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Preço Oferta (R$)</label>
                   <input
                     type="number"
                     step="0.01"
@@ -448,79 +470,79 @@ export const AdminDashboard: React.FC = () => {
                     placeholder="Opcional"
                     value={salePrice || ''}
                     onChange={(e) => setSalePrice(e.target.value ? Number(e.target.value) : undefined)}
-                    className="w-full p-2 bg-stone-50 border border-stone-200 rounded-xl"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-amber-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-stone-700 font-semibold mb-1">Estoque</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Estoque</label>
                   <input
                     type="number"
                     min="0"
                     required
                     value={stock}
                     onChange={(e) => setStock(Number(e.target.value))}
-                    className="w-full p-2 bg-stone-50 border border-stone-200 rounded-xl"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-amber-500"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-stone-700 font-semibold mb-1">Produtor / Fazenda</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Marca / Fabricante</label>
                   <input
                     type="text"
                     required
                     value={producer}
                     onChange={(e) => setProducer(e.target.value)}
-                    className="w-full p-2 bg-stone-50 border border-stone-200 rounded-xl"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-amber-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-stone-700 font-semibold mb-1">Localidade de Origem</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Origem / Centro Fabril</label>
                   <input
                     type="text"
                     required
                     value={originLocation}
                     onChange={(e) => setOriginLocation(e.target.value)}
-                    className="w-full p-2 bg-stone-50 border border-stone-200 rounded-xl"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-amber-500"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-stone-700 font-semibold mb-1">Descrição</label>
+                <label className="block text-slate-700 font-semibold mb-1">Especificação & Descrição</label>
                 <textarea
                   rows={2}
                   required
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full p-2 bg-stone-50 border border-stone-200 rounded-xl"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-amber-500"
                 />
               </div>
 
               <label className="flex items-center gap-2 cursor-pointer pt-1">
                 <input
                   type="checkbox"
-                  checked={isOrganic}
-                  onChange={(e) => setIsOrganic(e.target.checked)}
-                  className="w-4 h-4 text-emerald-700 rounded accent-emerald-700"
+                  checked={isAbntCertified}
+                  onChange={(e) => setIsAbntCertified(e.target.checked)}
+                  className="w-4 h-4 text-amber-600 rounded accent-amber-500"
                 />
-                <span className="font-semibold text-stone-800">Alimento com Certificação Orgânica</span>
+                <span className="font-semibold text-slate-800">Certificado conforme Normas ABNT / INMETRO</span>
               </label>
 
-              <div className="pt-3 border-t border-stone-100 flex gap-2">
+              <div className="pt-3 border-t border-slate-100 flex gap-2">
                 <button
                   type="button"
                   onClick={() => setProductModalOpen(false)}
-                  className="flex-1 py-2 bg-stone-100 text-stone-700 font-semibold rounded-xl text-xs"
+                  className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg text-xs cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl text-xs shadow-md"
+                  className="flex-1 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold rounded-lg text-xs shadow-xs cursor-pointer"
                 >
-                  Salvar Produto
+                  Salvar Material
                 </button>
               </div>
             </form>
@@ -531,26 +553,26 @@ export const AdminDashboard: React.FC = () => {
       {/* DELETE CONFIRMATION MODAL */}
       {deleteConfirmId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-stone-200 animate-in fade-in">
+          <div className="bg-white rounded-xl max-w-sm w-full p-5 shadow-2xl border border-slate-200 animate-in fade-in">
             <div className="w-10 h-10 rounded-full bg-red-100 text-red-700 flex items-center justify-center mb-3">
               <Trash2 className="w-5 h-5" />
             </div>
-            <h4 className="font-display font-bold text-base text-stone-900">
-              Confirmar Exclusão do Produto?
+            <h4 className="font-display font-bold text-base text-slate-900">
+              Confirmar Exclusão do Material?
             </h4>
-            <p className="text-xs text-stone-500 mt-1 leading-relaxed">
+            <p className="text-xs text-slate-500 mt-1 leading-relaxed">
               Esta ação removerá o produto e seus lotes vinculados permanentemente do catálogo. Deseja prosseguir?
             </p>
             <div className="mt-4 flex gap-2">
               <button
                 onClick={() => setDeleteConfirmId(null)}
-                className="flex-1 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-semibold rounded-xl"
+                className="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg cursor-pointer"
               >
                 Cancelar
               </button>
               <button
                 onClick={handleConfirmDelete}
-                className="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl shadow-md"
+                className="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-lg shadow-md cursor-pointer"
               >
                 Confirmar Exclusão
               </button>

@@ -1,12 +1,14 @@
 import React from 'react';
-import { Sparkles, Wand2 } from 'lucide-react';
+import { Calculator } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { Category } from '../types';
+import { OptimizedImage } from './OptimizedImage';
 
 export const CategoryBar: React.FC = () => {
-  const { categories, selectedCategorySlug, setSelectedCategorySlug, setActiveView, setBotOpen, t } = useApp();
+  const { categories, selectedCategorySlug, setSelectedCategorySlug, setActiveView, setSearchQuery, setBotOpen, t } = useApp();
 
   const handleSelectCategory = (category: Category) => {
+    setSearchQuery('');
     setSelectedCategorySlug(category.slug);
     setActiveView('category');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -34,20 +36,20 @@ export const CategoryBar: React.FC = () => {
   };
 
   return (
-    <div className="my-6">
-      <div className="flex items-center justify-between mb-3 px-1">
+    <section className="my-4 bg-white rounded-xl border border-slate-200 p-4 sm:p-5 shadow-xs">
+      <div className="flex items-center justify-between mb-3.5">
         <div>
-          <h2 className="font-display font-bold text-lg sm:text-xl text-slate-900 tracking-tight">
+          <h2 className="font-display font-bold text-base sm:text-lg text-slate-900 tracking-tight">
             Departamentos da Construção Civil
           </h2>
           <p className="text-xs text-slate-500">
-            Navegue pelas 8 principais categorias e simule materiais com Assistente de IA
+            Escolha a etapa da sua obra ou calcule materiais com nosso assistente técnico
           </p>
         </div>
       </div>
 
-      {/* Responsive Horizontal Grid with 8 Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-2.5 sm:gap-3">
+      {/* Clean Mercado Livre-Style 8-Card Grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-2.5">
         {categories.map((cat) => {
           const isSelected = selectedCategorySlug === cat.slug;
           const displayName = getCategoryName(cat);
@@ -56,53 +58,50 @@ export const CategoryBar: React.FC = () => {
             <button
               key={cat.id}
               onClick={() => handleSelectCategory(cat)}
-              className={`group flex flex-col items-center text-center p-2.5 rounded-2xl transition-all duration-200 border cursor-pointer ${
+              className={`group flex flex-col items-center text-center p-2.5 rounded-xl transition-all duration-150 border cursor-pointer ${
                 isSelected
-                  ? 'bg-amber-50 border-amber-500 shadow-sm ring-1 ring-amber-500'
-                  : 'bg-white hover:bg-slate-50 border-slate-200/90 hover:border-amber-400 shadow-xs'
+                  ? 'bg-amber-50 border-amber-500 ring-1 ring-amber-500'
+                  : 'bg-white hover:bg-slate-50 border-slate-200 hover:border-amber-400'
               }`}
             >
-              {/* Category Thumbnail */}
-              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden bg-slate-100 mb-2 relative shrink-0">
-                <img
-                  src={cat.image}
-                  alt={displayName}
-                  referrerPolicy="no-referrer"
-                  onError={(e) => {
-                    e.currentTarget.src = 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600&auto=format&fit=crop&q=80';
-                  }}
-                  className="w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-300"
-                />
-              </div>
+              <OptimizedImage
+                src={cat.image}
+                alt={displayName}
+                width={160}
+                height={160}
+                quality={75}
+                priority={true}
+                categoryHint={cat.id}
+                className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg mb-2 shrink-0 border border-slate-100"
+                imgClassName="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
+              />
 
-              {/* Category Name */}
-              <span className="text-[11px] sm:text-xs font-bold text-slate-800 group-hover:text-amber-700 line-clamp-1">
+              <span className="text-[11px] sm:text-xs font-semibold text-slate-900 group-hover:text-amber-700 line-clamp-1">
                 {displayName}
               </span>
-              <span className="text-[10px] text-slate-400 mt-0.5">
+              <span className="text-[10px] text-slate-400 mt-0.5 font-mono-numbers">
                 {cat.itemCount} {t.itemsCount}
               </span>
             </button>
           );
         })}
 
-        {/* 8th Card: Assistente de IA & Simulador */}
+        {/* 8th Card: Assistente de IA (Clean Architectural Tool Tile - Zero AI Slop) */}
         <button
           onClick={() => setBotOpen(true)}
-          className="group flex flex-col items-center text-center p-2.5 rounded-2xl transition-all duration-200 border border-amber-400/80 bg-gradient-to-br from-slate-900 via-slate-950 to-stone-900 text-white shadow-md hover:shadow-lg hover:border-amber-300 cursor-pointer relative overflow-hidden"
+          className="group flex flex-col items-center text-center p-2.5 rounded-xl transition-all duration-150 border border-slate-900 bg-slate-900 hover:bg-slate-800 text-white cursor-pointer"
         >
-          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center mb-2 shrink-0 border border-amber-400/30 group-hover:scale-105 transition-transform">
-            <Wand2 className="w-7 h-7 text-amber-400 animate-pulse" />
+          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg bg-amber-500 text-slate-950 flex items-center justify-center mb-2 shrink-0 group-hover:scale-105 transition-transform">
+            <Calculator className="w-7 h-7 stroke-[2]" />
           </div>
-          <span className="text-[11px] sm:text-xs font-black text-amber-300 group-hover:text-amber-200 line-clamp-1 flex items-center gap-1">
-            <Sparkles className="w-3 h-3 text-amber-400 shrink-0" />
+          <span className="text-[11px] sm:text-xs font-bold text-amber-400 line-clamp-1">
             Assistente de IA
           </span>
-          <span className="text-[9px] text-stone-300 mt-0.5 font-medium">
-            Simulador 3D & Cores
+          <span className="text-[10px] text-slate-300 mt-0.5 font-medium">
+            Simulador & Cores
           </span>
         </button>
       </div>
-    </div>
+    </section>
   );
 };
